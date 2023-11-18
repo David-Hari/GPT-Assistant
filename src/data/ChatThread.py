@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from typing import List, Optional, TextIO
 
@@ -22,9 +23,31 @@ class ChatThread:
 
 	@classmethod
 	def fromStream(cls, stream: TextIO):
+		"""
+		Reads a thread of chat messages from a text stream and returns a ChatThread object.
+		:param stream: A text stream (file-like object) containing the messages.
+		:return: A ChatThread object.
+		"""
 		obj = cls()
-		#TODO: Implement deserialization logic here
-		# Return an instance of the class based on the deserialized data
+
+		# Read metadata header
+		header = readChunk(stream)
+		metadata = json.loads(header)
+		if 'id' not in metadata:
+			raise ValueError('Chat thread is missing the \'id\' field.')
+		if 'created' not in metadata:
+			raise ValueError('Chat thread is missing the \'created\' field.')
+		obj.id = metadata.get('id')
+		obj.createdTimestamp = datetime.fromisoformat(metadata.get('created'))
+		obj.title = metadata.get('title', 'Untitled')
+
+		# Read the messages
+		obj.messages = []
+		message = ChatMessage.fromStream(stream)
+		while message:
+			obj.messages.append(message)
+			message = ChatMessage.fromStream(stream)
+
 		return obj
 
 

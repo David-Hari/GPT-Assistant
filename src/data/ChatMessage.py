@@ -32,25 +32,32 @@ class ChatMessage:
 		"""
 		Reads a chat message from a text stream and returns a ChatMessage object.
 		:param stream: A text stream (file-like object) containing the message.
-		:return: A ChatMessage object.
+		:return: A ChatMessage object or None if the stream is at the end.
 		"""
 		obj = cls()
 
 		# Read metadata header
 		header = readChunk(stream)
+		if not header or header == '':
+			return None
 		metadata = json.loads(header)
+		if 'id' not in metadata:
+			raise ValueError('Message is missing the \'id\' field.')
+		if 'created' not in metadata:
+			raise ValueError('Message is missing the \'created\' field.')
+		if 'role' not in metadata:
+			raise ValueError('Message is missing the \'role\' field.')
 		obj.id = metadata.get('id')
 		obj.createdTimestamp = datetime.fromisoformat(metadata.get('created'))
 		obj.role = metadata.get('role')
 
 		# Read message contents
 		obj.content = []
-		while True:
-			chunkData = readChunk(stream)
-			if not chunkData or chunkData == '':
-				break
+		chunkData = readChunk(stream)
+		while chunkData and chunkData != '':
 			content = MessageContentText(type='text', text=Text(value=chunkData, annotations=[]))
 			obj.content.append(content)
+			chunkData = readChunk(stream)
 
 		return obj
 

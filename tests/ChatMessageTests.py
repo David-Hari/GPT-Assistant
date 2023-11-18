@@ -40,6 +40,36 @@ class ChatMessageTests(TestCase):
 		self.assertEqual(message.content[2].text.value, 'Some more')
 
 
+	def testReadingMissingId(self):
+		messageString = '{"created": "2023-11-16T19:33:14", "role": "user"}\n\x1F' \
+		                'This is a message\n\x1F\n\x1E'
+		with self.assertRaises(ValueError) as context:
+			ChatMessage.fromStream(StringIO(messageString))
+		self.assertEqual(str(context.exception), 'Message is missing the \'id\' field.')
+
+
+	def testReadingMissingCreated(self):
+		messageString = '{"id": "abc123", "role": "user"}\n\x1F' \
+		                'This is a message\n\x1F\n\x1E'
+		with self.assertRaises(ValueError) as context:
+			ChatMessage.fromStream(StringIO(messageString))
+		self.assertEqual(str(context.exception), 'Message is missing the \'created\' field.')
+
+
+	def testReadingMissingRole(self):
+		messageString = '{"id": "abc123", "created": "2023-11-16T19:33:14"}\n\x1F' \
+		                'This is a message\n\x1F\n\x1E'
+		with self.assertRaises(ValueError) as context:
+			ChatMessage.fromStream(StringIO(messageString))
+		self.assertEqual(str(context.exception), 'Message is missing the \'role\' field.')
+
+
+	def testReadingMissingContent(self):
+		messageString = '{"id": "abc123", "created": "2023-11-16T19:33:14", "role": "user"}\n\x1F\n\x1E'
+		message = ChatMessage.fromStream(StringIO(messageString))
+		self.assertEqual(len(message.content), 0)
+
+
 	def testWritingSimpleMessage(self):
 		message = ChatMessage()
 		message.id = 'abc123'
