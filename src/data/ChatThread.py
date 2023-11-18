@@ -52,8 +52,9 @@ def readChunk(stream: TextIO):
 	lastChar = ''
 	while True:
 		char = stream.read(1)
-		if not char or (char == '\x1E' and lastChar == '\n') or char == '':
-			break
+		if char == '':
+			return
+		if char == '\x1E' and lastChar == '\n':
+			return result[:-1]
 		result += char
 		lastChar = char
-	return result

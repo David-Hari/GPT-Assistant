@@ -47,11 +47,10 @@ class ChatMessage:
 		obj.content = []
 		while True:
 			chunkData = readChunk(stream)
-			if chunkData == '\n\x1E':
+			if not chunkData or chunkData == '':
 				break
-			content = MessageContentText()
-			content.text = Text()
-			content.text.value = chunkData
+			content = MessageContentText(type='text', text=Text(value=chunkData, annotations=[]))
+			obj.content.append(content)
 
 		return obj
 
@@ -81,6 +80,6 @@ def readChunk(stream: TextIO):
 		if char == '':
 			return
 		if (char == '\x1F' or char == '\x1E') and lastChar == '\n':
-			return result
+			return result[:-1]
 		result += char
 		lastChar = char

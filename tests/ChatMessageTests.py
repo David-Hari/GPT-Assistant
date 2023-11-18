@@ -45,10 +45,7 @@ class ChatMessageTests(TestCase):
 		message.id = 'abc123'
 		message.createdTimestamp = datetime(2023, 11, 16, 19, 33, 14)
 		message.role = 'user'
-		content = MessageContentText()
-		content.text = Text()
-		content.text.value = 'This is a message'
-		message.content = [ content ]
+		message.content = [ MessageContentText(type='text', text=Text(value='This is a message', annotations=[])) ]
 
 		stream = StringIO()
 		message.toStream(stream)
