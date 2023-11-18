@@ -10,6 +10,8 @@
   If user renames it, use metadata on thread to flag it so that it won't be renamed. If user clears name then update it again.
   Use a cheaper model like gpt3.5
 
+* See if I can limit the context window for each thread. Lower it to maybe a few thousand to save cost.
+
 * Some possible functions:
    - readFile
    - writeFile
@@ -17,5 +19,11 @@
 
 * Show date/time on the left side of each message.
 
-* Have a collapsable panel to the right that shows all files uploaded. Can add by dropping files. Can remove and update existing
+* Drop-down for model list, initially populated from config but full list fetched when clicked.
+  Filter to only models that can be used with assistants API.
+
+* Collapsable panel to the right that shows all files uploaded. Can add by dropping files. Can remove and update existing
   files. Maybe also watch for file change and automatically upload.
+
+* Info button that when pressed shows a tool-tip with number of tokens used and cost.
+  (Doesn't seem to be currently possible to get that information from the API)
