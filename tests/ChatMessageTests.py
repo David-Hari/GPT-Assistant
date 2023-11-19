@@ -5,7 +5,7 @@ from unittest import TestCase
 from openai.types.beta.threads import MessageContentText
 from openai.types.beta.threads.message_content_text import Text
 
-from src.data.ChatMessage import ChatMessage
+from data.ChatMessage import ChatMessage
 
 
 class ChatMessageTests(TestCase):
@@ -28,7 +28,7 @@ class ChatMessageTests(TestCase):
 		self.assertEqual(message.role, 'assistant')
 
 
-	def testReadingComplexMessage(self):
+	def testReadingMultiPartMessage(self):
 		messageString = '{"id": "abc123", "created": "2023-11-16T19:33:14", "role": "user"}\n\x1F' \
 		                'This is a message\n\x1F'\
 		                'And another part\n\x1F'\
@@ -82,4 +82,40 @@ class ChatMessageTests(TestCase):
 
 		expected = '{"id": "abc123", "created": "2023-11-16T19:33:14", "role": "user"}\n\x1F' \
 		           'This is a message\n\x1F\n\x1E'
+		self.assertEqual(stream.getvalue(), expected)
+
+
+	def testWritingSimpleAssistantMessage(self):
+		message = ChatMessage()
+		message.id = 'abc123'
+		message.createdTimestamp = datetime(2023, 12, 8, 19, 33, 14)
+		message.role = 'assistant'
+		message.content = [ MessageContentText(type='text', text=Text(value='This is a message', annotations=[])) ]
+
+		stream = StringIO()
+		message.toStream(stream)
+
+		expected = '{"id": "abc123", "created": "2023-12-08T19:33:14", "role": "assistant"}\n\x1F' \
+		           'This is a message\n\x1F\n\x1E'
+		self.assertEqual(stream.getvalue(), expected)
+
+
+	def testWritingMultiPartMessage(self):
+		message = ChatMessage()
+		message.id = 'abc123'
+		message.createdTimestamp = datetime(2023, 11, 16, 19, 33, 14)
+		message.role = 'user'
+		message.content = [
+			MessageContentText(type='text', text=Text(value='This is a message', annotations=[])),
+			MessageContentText(type='text', text=Text(value='Another message', annotations=[])),
+			MessageContentText(type='text', text=Text(value='This the last message', annotations=[]))
+		]
+
+		stream = StringIO()
+		message.toStream(stream)
+
+		expected = '{"id": "abc123", "created": "2023-11-16T19:33:14", "role": "user"}\n\x1F' \
+		           'This is a message\n\x1F' \
+		           'Another message\n\x1F' \
+		           'This the last message\n\x1F\n\x1E'
 		self.assertEqual(stream.getvalue(), expected)

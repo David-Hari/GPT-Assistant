@@ -7,6 +7,10 @@ from openai.types.beta.threads.message_content_text import Text
 from openai.types.beta.threads.thread_message import ThreadMessage, Content
 
 
+RecordSeparator = '\x1E'
+UnitSeparator = '\x1F'
+
+
 class ChatMessage:
 	id: str
 	"""The identifier, which can be referenced in API endpoints."""
@@ -70,14 +74,33 @@ class ChatMessage:
 
 
 	def toStream(self, stream: TextIO):
-		#TODO: Accept stream to write to
-		pass
+		"""
+		Writes the chat message to a text stream.
+		:param stream: A text stream (file-like object) to write the message to.
+		"""
+
+		# Write metadata header
+		metadata = {
+			'id': self.id,
+			'created': self.createdTimestamp.isoformat(),
+			'role': self.role,
+		}
+		stream.write(json.dumps(metadata))
+		stream.write('\n' + UnitSeparator)
+
+		# Write message content
+		for content in self.content:
+			stream.write(content.text.value if content.text else '')
+			stream.write('\n' + UnitSeparator)
+
+		# End of message
+		stream.write('\n' + RecordSeparator)
 
 
 def readChunk(stream: TextIO):
 	"""
 	Reads from the stream until it reaches either the end of a message section
-	(newline then unit separator \x1F), the end of the message (newline then record separator \x1E)
+	(newline then unit separator), the end of the message (newline then record separator)
 	or the end of the stream.
 	"""
 	result = ''
@@ -86,7 +109,7 @@ def readChunk(stream: TextIO):
 		char = stream.read(1)
 		if char == '':
 			return
-		if (char == '\x1F' or char == '\x1E') and lastChar == '\n':
+		if (char == UnitSeparator or char == RecordSeparator) and lastChar == '\n':
 			return result[:-1]
 		result += char
 		lastChar = char

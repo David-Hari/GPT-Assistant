@@ -7,6 +7,9 @@ from openai.types.beta import Thread
 from data.ChatMessage import ChatMessage
 
 
+RecordSeparator = '\x1E'
+
+
 class ChatThread:
 	id: str
 	"""The identifier, which can be referenced in API endpoints."""
@@ -60,7 +63,21 @@ class ChatThread:
 
 
 	def toStream(self, stream: TextIO):
-		#TODO: json id, created, title
+		"""
+		Writes the thread of chat messages to a text stream.
+		:param stream: A text stream (file-like object) to write the message to.
+		"""
+
+		# Write metadata header
+		metadata = {
+			'id': self.id,
+			'created': self.createdTimestamp.isoformat(),
+			'title': self.title,
+		}
+		stream.write(json.dumps(metadata))
+		stream.write('\n' + RecordSeparator)
+
+		# Write each message
 		for message in self.messages:
 			message.toStream(stream)
 		pass
@@ -68,7 +85,7 @@ class ChatThread:
 
 def readChunk(stream: TextIO):
 	"""
-	Reads from the stream until it reaches either the end of a message (newline then record separator \x1E)
+	Reads from the stream until it reaches either the end of a message (newline then record separator)
 	or the end of the stream.
 	"""
 	result = ''
@@ -77,7 +94,7 @@ def readChunk(stream: TextIO):
 		char = stream.read(1)
 		if char == '':
 			return
-		if char == '\x1E' and lastChar == '\n':
+		if char == RecordSeparator and lastChar == '\n':
 			return result[:-1]
 		result += char
 		lastChar = char
