@@ -40,7 +40,7 @@ class MainWindow(QMainWindow):
 		#item = QListWidgetItem()
 		#item.setData(Qt.UserRole, chatThread.id)
 
-		#label = QLabel(chatThread.metadata.get('title', 'Untitled'))
+		#label = QLabel(chatThread.title)
 		#label.setObjectName('title')
 		#label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 		#label.setMinimumWidth(100)
