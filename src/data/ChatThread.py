@@ -57,7 +57,7 @@ class ChatThread:
 	def __init__(self, apiObject: Optional[Thread] = None):
 		if apiObject:
 			self.id = apiObject.id
-			self.dateCreated = datetime.utcfromtimestamp(apiObject.created_at)
+			self.createdTimestamp = datetime.utcfromtimestamp(apiObject.created_at)
 			self.title = apiObject.metadata.get('title', 'Untitled')
 			self.apiObject = apiObject  # Hold on to API object if we have it, as we might need additional properties from it
 

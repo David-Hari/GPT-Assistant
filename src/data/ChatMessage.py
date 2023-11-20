@@ -69,8 +69,13 @@ class ChatMessage:
 	def __init__(self, apiObject: Optional[ThreadMessage] = None):
 		if apiObject:
 			self.id = apiObject.id
-			self.dateCreated = datetime.utcfromtimestamp(apiObject.created_at)
+			self.createdTimestamp = datetime.utcfromtimestamp(apiObject.created_at)
 			self.apiObject = apiObject  # Hold on to API object if we have it, as we might need additional properties from it
+
+
+	@property
+	def threadId(self):
+		return self.apiObject and self.apiObject.thread_id
 
 
 	def toStream(self, stream: TextIO):
