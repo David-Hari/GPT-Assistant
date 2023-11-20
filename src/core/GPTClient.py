@@ -4,24 +4,27 @@ from pathlib import Path
 from PySide6.QtCore import QObject, Signal
 from openai import OpenAI
 
+from data.ChatMessage import ChatMessage
+from data.ChatThread import ChatThread
+
 
 class GPTClient(QObject):
 	messageReceived = Signal(str)
 	chatThreadAdded = Signal(object)
 
 
-	def __init__(self, model, chatsDirectory: Path, systemDirectory: Path):
+	def __init__(self, api: OpenAI, defaultModel, chatsDirectory: Path, systemDirectory: Path):
 		super().__init__()
 		self.chatsDirectory = chatsDirectory
 		self.systemDirectory = systemDirectory
 		self.chatsDirectory.mkdir(exist_ok=True)
 		self.systemDirectory.mkdir(exist_ok=True)
 
-		self.modelName = model
+		self.api = api
+		self.modelName = defaultModel
 		self.chatThreadList = []
 		self.mainAssistant = None
 
-		self.client = OpenAI()
 		self.retrieveAssistants()
 		self.loadChatThreadList()
 
@@ -33,7 +36,7 @@ class GPTClient(QObject):
 		for filePath in self.systemDirectory.iterdir():
 			if filePath.is_file() and filePath.name.startswith('asst') and filePath.suffix == '.txt':
 				try:
-					self.mainAssistant = self.client.beta.assistants.retrieve(filePath.stem)
+					self.mainAssistant = self.api.beta.assistants.retrieve(filePath.stem)
 					# TODO: Handle other assistants
 				except Exception as e:
 					print(f'Error retrieving assistant {filePath.stem}: {str(e)}')
@@ -48,7 +51,7 @@ class GPTClient(QObject):
 		for filePath in self.chatsDirectory.iterdir():
 			if filePath.is_file() and filePath.suffix == '.txt':
 				try:
-					thread = self.client.beta.threads.retrieve(filePath.stem)
+					thread = self.api.beta.threads.retrieve(filePath.stem)
 					self.chatThreadList.append(thread)
 				except Exception as e:
 					print(f'Error retrieving chat thread {filePath.stem}: {str(e)}')
@@ -60,7 +63,7 @@ class GPTClient(QObject):
 		Starts a new chat thread with the given title.
 		:emits: chatThreadAdded
 		"""
-		thread = self.client.beta.threads.create(metadata = {'title': title})
+		thread = ChatThread(self.api.beta.threads.create(metadata = {'title': title}))
 		self.chatThreadList.append(thread)
 		with open(self.chatsDirectory / f'{thread.id}.txt', 'w', encoding='utf-8') as file:
 			file.write('')
@@ -72,7 +75,7 @@ class GPTClient(QObject):
 		Deletes a chat thread and all it's messages from the server and from disk
 		:param chatThreadId: The ID of the chat thread
 		"""
-		self.client.beta.threads.delete(chatThreadId)
+		self.api.beta.threads.delete(chatThreadId)
 		file = self.chatsDirectory / f'{chatThreadId}.txt'
 		file.unlink(missing_ok = True)
 
@@ -84,19 +87,19 @@ class GPTClient(QObject):
 		:param messageText: Message text to send
 		:emits: messageReceived
 		"""
-		message = self.client.beta.threads.messages.create(chatThreadId, role = 'user', content = messageText)
+		message = ChatMessage(self.api.beta.threads.messages.create(chatThreadId, role = 'user', content = messageText))
 		# TODO: Log message
-		run = self.client.beta.threads.runs.create(
+		run = self.api.beta.threads.runs.create(
 			thread_id = chatThreadId,
 			assistant_id = self.mainAssistant.id
 		)
 		while run.status != 'completed':
 			time.sleep(1)
-			run = self.client.beta.threads.runs.retrieve(
+			run = self.api.beta.threads.runs.retrieve(
 				thread_id = chatThreadId,
 				run_id = run.id
 			)
-		messages = self.client.beta.threads.messages.list(chatThreadId)
+		messages = self.api.beta.threads.messages.list(chatThreadId)
 		self.messageReceived.emit(messages.data[0].content[0].text.value)
 
 
@@ -107,5 +110,5 @@ class GPTClient(QObject):
 		:param numLimit: A limit on the number of objects to be returned. Limit can range between 1 and 100
 		:return: list of message objects
 		"""
-		result = self.client.beta.threads.messages.list(chatThreadId, limit = numLimit, order = 'desc')
+		result = self.api.beta.threads.messages.list(chatThreadId, limit = numLimit, order = 'desc')
 		return reversed(result.data)
