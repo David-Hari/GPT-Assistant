@@ -189,22 +189,6 @@
     </hint>
    </hints>
   </connection>
-  <connection>
-   <sender>chatThreadsList</sender>
-   <signal>clicked(QModelIndex)</signal>
-   <receiver>MainWindow</receiver>
-   <slot>chatThreadChanged()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>149</x>
-     <y>195</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>378</x>
-     <y>-16</y>
-    </hint>
-   </hints>
-  </connection>
  </connections>
  <slots>
   <slot>createNewChat()</slot>
