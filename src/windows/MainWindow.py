@@ -20,23 +20,21 @@ class MainWindow(QMainWindow):
 		with open('src\\ui\\MainWindow.css', 'r', encoding='utf-8') as file:
 			self.setStyleSheet(file.read())
 
-		self.chatThreadListModel = ChatThreadListModel(self.chatClient.chatThreadList)
+		self.chatThreadListModel = ChatThreadListModel(self.chatClient.chatThreads)
 		self.ui.chatThreadsList.setModel(self.chatThreadListModel)
 		self.ui.chatThreadsList.setItemDelegate(ChatThreadItemDelegate(self.ui.chatThreadsList))
 		self.ui.chatThreadsList.selectionModel().currentChanged.connect(self.chatThreadChanged)
 
+		self.chatClient.chatThreadListLoaded.connect(self.chatThreadListLoaded)
 		self.chatClient.chatThreadAdded.connect(self.addChatThreadToList)
 		self.chatClient.messageReceived.connect(self.appendMessage)
 
-		self.loadChatThreadList()
-
 
 	def addChatThreadToList(self, chatThread):
-		pass
 		# Notify the model that a new row is inserted
-		#self.chatThreadListModel.beginInsertRows(QModelIndex(), self.chatThreadListModel.rowCount(), self.chatThreadListModel.rowCount())
-		#self.chatThreadListModel.chatThreads.append(chatThread)
-		#self.chatThreadListModel.endInsertRows()
+		self.chatThreadListModel.beginInsertRows(QModelIndex(), self.chatThreadListModel.rowCount(), self.chatThreadListModel.rowCount())
+		self.chatThreadListModel.chatThreads.append(chatThread)
+		self.chatThreadListModel.endInsertRows()
 		#item = QListWidgetItem()
 		#item.setData(Qt.UserRole, chatThread.id)
 
@@ -61,11 +59,15 @@ class MainWindow(QMainWindow):
 
 
 
-	def loadChatThreadList(self):
-		""" Load chat threads and populate the sidebar """
-		for chatThread in self.chatClient.chatThreadList:
+	@Slot()
+	def chatThreadListLoaded(self):
+		""" Populate the sidebar with the chat threads """
+		# TODO: Can this be handled by ChatThreadList.py
+		# Sort by created time in descending order (most recent first)
+		chatThreads = sorted(self.chatClient.chatThreads.values(), key = lambda each: each.createdTimestamp, reverse = True)
+		for chatThread in chatThreads:
 			self.addChatThreadToList(chatThread)
-		self.currentChatThreadId = self.chatClient.chatThreadList[0].id
+		self.currentChatThreadId = chatThreads[0].id
 
 
 	@Slot()
@@ -81,7 +83,7 @@ class MainWindow(QMainWindow):
 	def selectChatThread(self, chatThreadId):
 		self.currentChatThreadId = chatThreadId
 		self.ui.chatArea.clear()
-		messages = self.chatClient.retrieveMessages(self.currentChatThreadId, 10)
+		messages = self.chatClient.loadMessages(self.currentChatThreadId)
 		for message in messages:
 			self.appendMessage(message.content[0].text.value)
 

@@ -11,7 +11,7 @@ class ChatThreadListModel(QAbstractListModel):
 
 	def __init__(self, chatThreads, parent = None):
 		super(ChatThreadListModel, self).__init__(parent)
-		self.chatThreads = chatThreads
+		self.chatThreads = []
 
 
 	def rowCount(self, parent = QModelIndex()):
@@ -21,7 +21,7 @@ class ChatThreadListModel(QAbstractListModel):
 	def data(self, index, role = Qt.DisplayRole):
 		chatThread = self.chatThreads[index.row()]
 		if role == Qt.DisplayRole:
-			return chatThread.metadata.get('title', 'Untitled')
+			return chatThread.title
 		if role == Qt.UserRole:
 			return chatThread.id
 		return None

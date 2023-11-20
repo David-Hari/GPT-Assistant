@@ -1,7 +1,8 @@
+import asyncio
 import time
 from pathlib import Path
 
-from PySide6.QtCore import QObject, Signal
+from PySide6.QtCore import QObject, Signal, Slot
 from openai import OpenAI
 
 from data.ChatMessage import ChatMessage
@@ -9,10 +10,12 @@ from data.ChatThread import ChatThread
 
 
 class GPTClient(QObject):
-	messageReceived = Signal(str)
+	chatThreadListLoaded = Signal()
 	chatThreadAdded = Signal(object)
+	messageReceived = Signal(str)
 
 
+	# TODO: api: AsyncOpenAI
 	def __init__(self, api: OpenAI, defaultModel, chatsDirectory: Path, systemDirectory: Path):
 		super().__init__()
 		self.chatsDirectory = chatsDirectory
@@ -22,11 +25,10 @@ class GPTClient(QObject):
 
 		self.api = api
 		self.modelName = defaultModel
-		self.chatThreadList = []
+		self.chatThreads = {}
 		self.mainAssistant = None
 
 		self.retrieveAssistants()
-		self.loadChatThreadList()
 
 
 	def retrieveAssistants(self):
@@ -47,15 +49,31 @@ class GPTClient(QObject):
 		Gets the list of chat threads stored in the local data directory,
 		retrieving information from the API if necessary.
 		"""
-		self.chatThreadList.clear()
 		for filePath in self.chatsDirectory.iterdir():
 			if filePath.is_file() and filePath.suffix == '.txt':
 				try:
-					thread = self.api.beta.threads.retrieve(filePath.stem)
-					self.chatThreadList.append(thread)
+					chatThread = self.api.beta.threads.retrieve(filePath.stem)
+					self.chatThreads[chatThread.id] = ChatThread(chatThread)
 				except Exception as e:
 					print(f'Error retrieving chat thread {filePath.stem}: {str(e)}')
-		# TODO: Sort by date, first is most recent
+		self.chatThreadListLoaded.emit()
+	#@Slot()
+	#async def loadChatThreadList(self):
+	#	"""
+	#	Gets the list of chat threads stored in the local data directory,
+	#	retrieving information from the API if necessary.
+	#	"""
+	#	# Get all file paths synchronously
+	#	filePaths = [filePath for filePath in self.chatsDirectory.iterdir() if filePath.is_file() and filePath.suffix == '.txt']
+
+	#	# Concurrently retrieve chat threads
+	#	tasks = [self.api.beta.threads.retrieve(file.stem) for file in filePaths]
+	#	chatThreads = await asyncio.gather(*tasks, return_exceptions=True)
+	#	for chatThread in chatThreads:
+	#		self.chatThreads[chatThread.id] = ChatThread(chatThread)
+
+	#	# Notify that we are done
+	#	self.chatThreadListLoaded.emit()
 
 
 	def createNewChat(self, title):
@@ -64,7 +82,7 @@ class GPTClient(QObject):
 		:emits: chatThreadAdded
 		"""
 		thread = ChatThread(self.api.beta.threads.create(metadata = {'title': title}))
-		self.chatThreadList.append(thread)
+		self.chatThreads[thread.id] = thread
 		with open(self.chatsDirectory / f'{thread.id}.txt', 'w', encoding='utf-8') as file:
 			file.write('')
 		self.chatThreadAdded.emit(thread)
@@ -78,6 +96,18 @@ class GPTClient(QObject):
 		self.api.beta.threads.delete(chatThreadId)
 		file = self.chatsDirectory / f'{chatThreadId}.txt'
 		file.unlink(missing_ok = True)
+
+
+	def loadMessages(self, chatThreadId: str):
+		"""
+		Loads the messages from disk and retrieves and newer messages from the server.
+		:param chatThreadId: The ID of the chat thread the messages belong to.
+		:return: list of message objects
+		"""
+		# TODO: Load from file first, then retrieve 20 from server and check if any are newer. If so, append to file.
+		# If file is empty, load all from server (probably need to do paging).
+		result = self.api.beta.threads.messages.list(chatThreadId, limit = 20, order = 'desc')
+		return reversed(result.data)
 
 
 	def sendMessage(self, chatThreadId, messageText):
@@ -101,14 +131,3 @@ class GPTClient(QObject):
 			)
 		messages = self.api.beta.threads.messages.list(chatThreadId)
 		self.messageReceived.emit(messages.data[0].content[0].text.value)
-
-
-	def retrieveMessages(self, chatThreadId, numLimit):
-		"""
-		Retrieves a number of messages from the server in descending order of creation time.
-		:param chatThreadId: The ID of the chat thread the messages belong to.
-		:param numLimit: A limit on the number of objects to be returned. Limit can range between 1 and 100
-		:return: list of message objects
-		"""
-		result = self.api.beta.threads.messages.list(chatThreadId, limit = numLimit, order = 'desc')
-		return reversed(result.data)
