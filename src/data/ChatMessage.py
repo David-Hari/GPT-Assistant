@@ -70,6 +70,8 @@ class ChatMessage:
 		if apiObject:
 			self.id = apiObject.id
 			self.createdTimestamp = datetime.utcfromtimestamp(apiObject.created_at)
+			self.role = apiObject.role
+			self.content = apiObject.content
 			self.apiObject = apiObject  # Hold on to API object if we have it, as we might need additional properties from it
 
 
