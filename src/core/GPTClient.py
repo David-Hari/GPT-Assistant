@@ -5,6 +5,7 @@ from pathlib import Path
 from PySide6.QtCore import QObject, Signal, Slot
 from openai import OpenAI
 
+from core.ChatDatabase import ChatDatabase
 from data.ChatMessage import ChatMessage
 from data.ChatThread import ChatThread
 
@@ -16,16 +17,15 @@ class GPTClient(QObject):
 
 
 	# TODO: api: AsyncOpenAI
-	def __init__(self, api: OpenAI, defaultModel, chatsDirectory: Path, systemDirectory: Path):
+	def __init__(self, api: OpenAI, defaultModel, database: ChatDatabase, chatsDirectory: Path):
 		super().__init__()
 		self.chatsDirectory = chatsDirectory
-		self.systemDirectory = systemDirectory
 		self.chatsDirectory.mkdir(exist_ok=True)
-		self.systemDirectory.mkdir(exist_ok=True)
 
 		self.api = api
 		self.modelName = defaultModel
-		self.chatThreads = {}
+		self.database = database
+		self.chatThreads: dict[str, ChatThread] = {}
 		self.mainAssistant = None
 
 		self.retrieveAssistants()
@@ -35,13 +35,9 @@ class GPTClient(QObject):
 		"""
 		Retrieve the assistants
 		"""
-		for filePath in self.systemDirectory.iterdir():
-			if filePath.is_file() and filePath.name.startswith('asst') and filePath.suffix == '.txt':
-				try:
-					self.mainAssistant = self.api.beta.assistants.retrieve(filePath.stem)
-					# TODO: Handle other assistants
-				except Exception as e:
-					print(f'Error retrieving assistant {filePath.stem}: {str(e)}')
+		assistants = self.api.beta.assistants.list()
+		self.database.updateAssistants(assistants.data)
+		self.mainAssistant = next(each for each in assistants.data if each.name == 'Desktop Assistant')
 
 
 	def loadChatThreadList(self):
@@ -81,11 +77,11 @@ class GPTClient(QObject):
 		Starts a new chat thread with the given title.
 		:emits: chatThreadAdded
 		"""
-		thread = ChatThread(self.api.beta.threads.create(metadata = {'title': title}))
-		self.chatThreads[thread.id] = thread
-		with open(self.chatsDirectory / f'{thread.id}.txt', 'w', encoding='utf-8') as file:
+		chatThread = ChatThread(self.api.beta.threads.create(metadata = {'title': title}))
+		self.chatThreads[chatThread.id] = chatThread
+		with open(self.chatsDirectory / f'{chatThread.id}.txt', 'w', encoding='utf-8') as file:
 			file.write('')
-		self.chatThreadAdded.emit(thread)
+		self.chatThreadAdded.emit(chatThread)
 
 
 	def deleteChatThread(self, chatThreadId):
@@ -105,8 +101,7 @@ class GPTClient(QObject):
 		:return: list of message objects
 		"""
 		# TODO: Load from file first, then retrieve 20 from server and check if any are newer. If so, append to file.
-		# If file is empty, load all from server (probably need to do paging).
-		result = self.api.beta.threads.messages.list(chatThreadId, limit = 20, order = 'desc')
+		result = self.api.beta.threads.messages.list(chatThreadId, limit = 100, order = 'desc')
 		return reversed(result.data)
 
 

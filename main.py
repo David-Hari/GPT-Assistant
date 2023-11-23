@@ -8,6 +8,7 @@ from PySide6.QtAsyncio import QAsyncioEventLoopPolicy
 from PySide6.QtWidgets import QApplication
 from openai import OpenAI
 
+from core.ChatDatabase import ChatDatabase
 from core.GPTClient import GPTClient
 from windows.MainWindow import MainWindow
 
@@ -16,8 +17,10 @@ config = OmegaConf.load('config.yaml')
 
 app = QApplication(sys.argv)
 
+database = ChatDatabase(Path("data/chats.db"))
+
 # TODO: AsyncOpenAI()
-chatClient = GPTClient(OpenAI(), config.model, Path('data/chats'), Path('data/system'))
+chatClient = GPTClient(OpenAI(), config.model, database, Path('data/chats'))
 
 window = MainWindow(chatClient)
 window.show()
