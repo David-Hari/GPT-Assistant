@@ -1,6 +1,6 @@
-from datetime import datetime
 from pathlib import Path
 
+from PySide6.QtCore import QDateTime
 from PySide6.QtSql import QSqlDatabase, QSqlQuery
 from openai.types.beta import Assistant
 
@@ -63,7 +63,7 @@ class ChatDatabase:
 
 		for assistant in assistants:
 			query.bindValue(':id', assistant.id)
-			query.bindValue(':created', datetime.fromtimestamp(assistant.created_at).strftime('%Y-%m-%d %H:%M:%S'))
+			query.bindValue(':created', QDateTime.fromSecsSinceEpoch(assistant.created_at))
 			query.bindValue(':name', assistant.name)
 			query.bindValue(':instructions', assistant.instructions)
 			query.exec()
