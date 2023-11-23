@@ -31,7 +31,7 @@ ChatMessages (
 )
 """
 
-class ChatDatabase:
+class Database:
 
 	def __init__(self, dbPath: Path):
 		shouldCreate = not dbPath.exists()  # Need to check this first, as connecting will automatically create the file

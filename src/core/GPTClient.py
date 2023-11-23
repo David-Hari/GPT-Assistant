@@ -5,7 +5,7 @@ from pathlib import Path
 from PySide6.QtCore import QObject, Signal, Slot
 from openai import OpenAI
 
-from core.ChatDatabase import ChatDatabase
+from core.Database import Database
 from data.ChatMessage import ChatMessage
 from data.ChatThread import ChatThread
 
@@ -17,7 +17,7 @@ class GPTClient(QObject):
 
 
 	# TODO: api: AsyncOpenAI
-	def __init__(self, api: OpenAI, defaultModel, database: ChatDatabase, chatsDirectory: Path):
+	def __init__(self, api: OpenAI, defaultModel, database: Database, chatsDirectory: Path):
 		super().__init__()
 		self.chatsDirectory = chatsDirectory
 		self.chatsDirectory.mkdir(exist_ok=True)
