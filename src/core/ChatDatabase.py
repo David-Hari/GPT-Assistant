@@ -1,7 +1,7 @@
+from datetime import datetime
 from pathlib import Path
+import sqlite3
 
-from PySide6.QtCore import QDateTime
-from PySide6.QtSql import QSqlDatabase, QSqlQuery
 from openai.types.beta import Assistant
 
 
@@ -34,38 +34,35 @@ ChatMessages (
 class ChatDatabase:
 
 	def __init__(self, dbPath: Path):
-		self.db = QSqlDatabase.addDatabase("QSQLITE")
-		self.db.setDatabaseName(str(dbPath))
+		shouldCreate = not dbPath.exists()  # Need to check this first, as connecting will automatically create the file
 
-		if not dbPath.exists():
-			self.createDatabase(dbPath)
+		self.connection = sqlite3.connect(dbPath, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
+		self.connection.row_factory = sqlite3.Row
+
+		if shouldCreate:
+			self.createDatabase()
 
 
-	def createDatabase(self, dbPath: Path):
-		dbPath.touch()
-
-		if not self.db.open():
-			raise Exception('Unable to open the chats database. ' + self.db.lastError().text())
-
-		query = QSqlQuery(self.db)
-		query.exec('create table if not exists ' + assistantsTableSchema)
-		query.exec('create table if not exists ' + threadTableSchema)
-		query.exec('create table if not exists ' + messageTableSchema)
-
-		self.db.close()
+	def createDatabase(self):
+		with self.connection:
+			cursor = self.connection.cursor()
+			cursor.execute('create table if not exists ' + assistantsTableSchema)
+			cursor.execute('create table if not exists ' + threadTableSchema)
+			cursor.execute('create table if not exists ' + messageTableSchema)
+			cursor.close()
 
 
 	def updateAssistants(self, assistants: list[Assistant]):
-		self.db.open()
+		with self.connection:
+			cursor = self.connection.cursor()
 
-		query = QSqlQuery(self.db)
-		query.prepare('INSERT OR REPLACE INTO Assistants (id, created, name, instructions) VALUES (:id, :created, :name, :instructions)')
-
-		for assistant in assistants:
-			query.bindValue(':id', assistant.id)
-			query.bindValue(':created', QDateTime.fromSecsSinceEpoch(assistant.created_at))
-			query.bindValue(':name', assistant.name)
-			query.bindValue(':instructions', assistant.instructions)
-			query.exec()
-
-		self.db.close()
+			values = [
+				{
+					'id': assistant.id,
+					'created': datetime.utcfromtimestamp(assistant.created_at),
+					'name': assistant.name,
+					'instructions': assistant.instructions
+				} for assistant in assistants
+			]
+			cursor.executemany('INSERT OR REPLACE INTO Assistants (id, created, name, instructions) ' +
+			                  'VALUES (:id, :created, :name, :instructions)', values)

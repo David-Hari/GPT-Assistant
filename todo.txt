@@ -19,6 +19,8 @@
    - writeFile
    - updateFile   # For a file that is given to the AI for use with the retrieval tool. Updating would write back to the API.
 
+* Allow AI to store data in its own database - "knowledge.db"
+
 * Show date/time on the left side of each message.
 
 * Drop-down for model list, initially populated from config but full list fetched when clicked.
