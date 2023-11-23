@@ -33,12 +33,9 @@ ChatMessages (
 
 class Database:
 
-	def __init__(self, dbPath: Path):
-		shouldCreate = not dbPath.exists()  # Need to check this first, as connecting will automatically create the file
-
+	def __init__(self, dbPath: Path, shouldCreate):
 		self.connection = sqlite3.connect(dbPath, detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
 		self.connection.row_factory = sqlite3.Row
-
 		if shouldCreate:
 			self.createDatabase()
 

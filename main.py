@@ -17,7 +17,8 @@ config = OmegaConf.load('config.yaml')
 
 app = QApplication(sys.argv)
 
-database = Database(Path("data/chats.db"))
+dbPath = Path("data/chats.db")
+database = Database(dbPath, not dbPath.exists())
 
 # TODO: AsyncOpenAI()
 chatClient = GPTClient(OpenAI(), config.model, database, Path('data/chats'))
