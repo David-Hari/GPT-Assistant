@@ -1,5 +1,4 @@
 from datetime import datetime
-from io import StringIO
 from unittest import TestCase
 
 from openai.types.beta.threads import MessageContentText
@@ -10,112 +9,70 @@ from data.ChatMessage import ChatMessage
 
 class ChatMessageTests(TestCase):
 
-	def testReadingSimpleMessage(self):
-		messageString = '{"id": "abc123", "created": "2023-11-16T19:33:14", "role": "user"}\n\x1F'\
-		                'This is a message\n\x1F\n\x1E'
-		message = ChatMessage.fromStream(StringIO(messageString))
+	def testSimpleMessageFromDict(self):
+		dictionary  = {
+			'id': 'abc123',
+			'threadId': 'thread123',
+			'created': datetime.fromisoformat('2023-11-16T19:33:14'),
+			'role': 'user',
+			'content': 'This is a message'
+		}
+		message = ChatMessage.fromDictionary(dictionary)
 		self.assertEqual(message.id, 'abc123')
-		self.assertEqual(message.createdTimestamp, datetime(2023, 11, 16, 19, 33, 14))
+		self.assertEqual(message.threadId, 'thread123')
+		self.assertEqual(message.createdTimestamp, datetime.fromisoformat('2023-11-16T19:33:14'))
 		self.assertEqual(message.role, 'user')
 		self.assertEqual(len(message.content), 1)
 		self.assertEqual(message.content[0].text.value, 'This is a message')
 
 
-	def testReadingSimpleAssistantMessage(self):
-		messageString = '{"id": "abc123", "created": "2023-11-16T19:33:14", "role": "assistant"}\n\x1F' \
-		                'This is a message\n\x1F\n\x1E'
-		message = ChatMessage.fromStream(StringIO(messageString))
+	def testSimpleAssistantMessageFromDict(self):
+		dictionary  = {
+			'id': 'abc123',
+			'threadId': 'thread123',
+			'created': datetime.fromisoformat('2023-11-16T19:33:14'),
+			'role': 'assistant',
+			'content': 'This is a message'
+		}
+		message = ChatMessage.fromDictionary(dictionary)
 		self.assertEqual(message.role, 'assistant')
 
 
-	def testReadingMultiPartMessage(self):
-		messageString = '{"id": "abc123", "created": "2023-11-16T19:33:14", "role": "user"}\n\x1F' \
-		                'This is a message\n\x1F'\
-		                'And another part\n\x1F'\
-		                'Some more\n\x1F\n\x1E'
-		message = ChatMessage.fromStream(StringIO(messageString))
-		self.assertEqual(len(message.content), 3)
-		self.assertEqual(message.content[0].text.value, 'This is a message')
-		self.assertEqual(message.content[1].text.value, 'And another part')
-		self.assertEqual(message.content[2].text.value, 'Some more')
-
-
-	def testReadingMissingId(self):
-		messageString = '{"created": "2023-11-16T19:33:14", "role": "user"}\n\x1F' \
-		                'This is a message\n\x1F\n\x1E'
-		with self.assertRaises(ValueError) as context:
-			ChatMessage.fromStream(StringIO(messageString))
-		self.assertEqual(str(context.exception), 'Message is missing the \'id\' field.')
-
-
-	def testReadingMissingCreated(self):
-		messageString = '{"id": "abc123", "role": "user"}\n\x1F' \
-		                'This is a message\n\x1F\n\x1E'
-		with self.assertRaises(ValueError) as context:
-			ChatMessage.fromStream(StringIO(messageString))
-		self.assertEqual(str(context.exception), 'Message is missing the \'created\' field.')
-
-
-	def testReadingMissingRole(self):
-		messageString = '{"id": "abc123", "created": "2023-11-16T19:33:14"}\n\x1F' \
-		                'This is a message\n\x1F\n\x1E'
-		with self.assertRaises(ValueError) as context:
-			ChatMessage.fromStream(StringIO(messageString))
-		self.assertEqual(str(context.exception), 'Message is missing the \'role\' field.')
-
-
-	def testReadingMissingContent(self):
-		messageString = '{"id": "abc123", "created": "2023-11-16T19:33:14", "role": "user"}\n\x1F\n\x1E'
-		message = ChatMessage.fromStream(StringIO(messageString))
-		self.assertEqual(len(message.content), 0)
-
-
-	def testWritingSimpleMessage(self):
+	def testSimpleMessageToDict(self):
 		message = ChatMessage()
 		message.id = 'abc123'
-		message.createdTimestamp = datetime(2023, 11, 16, 19, 33, 14)
+		message.threadId = 'thread123'
+		message.createdTimestamp = datetime.fromisoformat('2023-11-16T19:33:14')
 		message.role = 'user'
 		message.content = [ MessageContentText(type='text', text=Text(value='This is a message', annotations=[])) ]
 
-		stream = StringIO()
-		message.toStream(stream)
+		dictionary = message.toDictionary()
 
-		expected = '{"id": "abc123", "created": "2023-11-16T19:33:14", "role": "user"}\n\x1F' \
-		           'This is a message\n\x1F\n\x1E'
-		self.assertEqual(stream.getvalue(), expected)
+		expected  = {
+			'id': 'abc123',
+			'threadId': 'thread123',
+			'created': datetime.fromisoformat('2023-11-16T19:33:14'),
+			'role': 'user',
+			'content': 'This is a message'
+		}
+		self.assertEqual(dictionary, expected)
 
 
-	def testWritingSimpleAssistantMessage(self):
+	def testSimpleAssistantMessageToDict(self):
 		message = ChatMessage()
 		message.id = 'abc123'
-		message.createdTimestamp = datetime(2023, 12, 8, 19, 33, 14)
+		message.threadId = 'thread123'
+		message.createdTimestamp = datetime.fromisoformat('2023-12-08T19:33:14')
 		message.role = 'assistant'
 		message.content = [ MessageContentText(type='text', text=Text(value='This is a message', annotations=[])) ]
 
-		stream = StringIO()
-		message.toStream(stream)
+		dictionary = message.toDictionary()
 
-		expected = '{"id": "abc123", "created": "2023-12-08T19:33:14", "role": "assistant"}\n\x1F' \
-		           'This is a message\n\x1F\n\x1E'
-		self.assertEqual(stream.getvalue(), expected)
-
-
-	def testWritingMultiPartMessage(self):
-		message = ChatMessage()
-		message.id = 'abc123'
-		message.createdTimestamp = datetime(2023, 11, 16, 19, 33, 14)
-		message.role = 'user'
-		message.content = [
-			MessageContentText(type='text', text=Text(value='This is a message', annotations=[])),
-			MessageContentText(type='text', text=Text(value='Another message', annotations=[])),
-			MessageContentText(type='text', text=Text(value='This the last message', annotations=[]))
-		]
-
-		stream = StringIO()
-		message.toStream(stream)
-
-		expected = '{"id": "abc123", "created": "2023-11-16T19:33:14", "role": "user"}\n\x1F' \
-		           'This is a message\n\x1F' \
-		           'Another message\n\x1F' \
-		           'This the last message\n\x1F\n\x1E'
-		self.assertEqual(stream.getvalue(), expected)
+		expected  = {
+			'id': 'abc123',
+			'threadId': 'thread123',
+			'created': datetime.fromisoformat('2023-12-08T19:33:14'),
+			'role': 'assistant',
+			'content': 'This is a message'
+		}
+		self.assertEqual(dictionary, expected)

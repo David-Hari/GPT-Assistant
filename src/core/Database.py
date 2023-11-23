@@ -7,7 +7,7 @@ from openai.types.beta import Assistant
 
 assistantsTableSchema = """
 Assistants (
-    id           text       primary key,
+    id           text    primary key,
     created      timestamp,
     name         text,
     instructions text
@@ -15,19 +15,20 @@ Assistants (
 """
 threadTableSchema = """
 ChatThreads (
-    id        text       primary key,
+    id        text    primary key,
     created   timestamp,
     title     text
+    userTitle integer
 )
 """
 messageTableSchema = """
 ChatMessages (
-    id        text       primary key,
+    id        text    primary key,
     threadId  text,
     created   timestamp,
     role      text,
     content   text,
-    foreign   key (threadId) references Thread(id)
+    foreign key (threadId) references Thread(id)
 )
 """
 

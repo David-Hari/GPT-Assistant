@@ -32,91 +32,45 @@ class ChatMessage:
 
 
 	@classmethod
-	def fromStream(cls, stream: TextIO):
+	def fromDictionary(cls, dictionary):
 		"""
-		Reads a chat message from a text stream and returns a ChatMessage object.
-		:param stream: A text stream (file-like object) containing the message.
-		:return: A ChatMessage object or None if the stream is at the end.
+		Creates a ChatMessage object from the properties in a dictionary.
 		"""
 		obj = cls()
-
-		# Read metadata header
-		header = readChunk(stream)
-		if not header or header == '':
-			return None
-		metadata = json.loads(header)
-		if 'id' not in metadata:
-			raise ValueError('Message is missing the \'id\' field.')
-		if 'created' not in metadata:
-			raise ValueError('Message is missing the \'created\' field.')
-		if 'role' not in metadata:
-			raise ValueError('Message is missing the \'role\' field.')
-		obj.id = metadata.get('id')
-		obj.createdTimestamp = datetime.fromisoformat(metadata.get('created'))
-		obj.role = metadata.get('role')
-
-		# Read message contents
-		obj.content = []
-		chunkData = readChunk(stream)
-		while chunkData and chunkData != '':
-			content = MessageContentText(type='text', text=Text(value=chunkData, annotations=[]))
-			obj.content.append(content)
-			chunkData = readChunk(stream)
-
+		obj.id = dictionary['id']
+		obj.threadId = dictionary['threadId']
+		obj.createdTimestamp = dictionary['created']
+		obj.role = dictionary['role']
+		obj.content = [ MessageContentText(type='text', text=Text(value=dictionary['content'], annotations=[])) ]
 		return obj
 
 
 	def __init__(self, apiObject: Optional[ThreadMessage] = None):
+		self.apiObject = None
 		if apiObject:
-			self.id = apiObject.id
-			self.createdTimestamp = datetime.utcfromtimestamp(apiObject.created_at)
-			self.role = apiObject.role
-			self.content = apiObject.content
-			self.apiObject = apiObject  # Hold on to API object if we have it, as we might need additional properties from it
+			self.setAPIObject(apiObject)
 
 
-	@property
-	def threadId(self):
-		return self.apiObject and self.apiObject.thread_id
-
-
-	def toStream(self, stream: TextIO):
+	def setAPIObject(self, apiObject: ThreadMessage):
 		"""
-		Writes the chat message to a text stream.
-		:param stream: A text stream (file-like object) to write the message to.
+		Sets the properties from an API object that came from a request to get this message from the server.
 		"""
+		self.apiObject = apiObject
+		self.id = apiObject.id
+		self.threadId = apiObject.thread_id
+		self.createdTimestamp = datetime.utcfromtimestamp(apiObject.created_at)
+		self.role = apiObject.role
+		self.content = apiObject.content
 
-		# Write metadata header
-		metadata = {
+
+	def toDictionary(self):
+		"""
+		Returns a dictionary with the properties of this message object.
+		"""
+		return {
 			'id': self.id,
-			'created': self.createdTimestamp.isoformat(),
+			'threadId': self.threadId,
+			'created': self.createdTimestamp,
 			'role': self.role,
+			'content': self.content[0].text.value
 		}
-		stream.write(json.dumps(metadata))
-		stream.write('\n' + UnitSeparator)
-
-		# Write message content
-		for content in self.content:
-			stream.write(content.text.value if content.text else '')
-			stream.write('\n' + UnitSeparator)
-
-		# End of message
-		stream.write('\n' + RecordSeparator)
-
-
-def readChunk(stream: TextIO):
-	"""
-	Reads from the stream until it reaches either the end of a message section
-	(newline then unit separator), the end of the message (newline then record separator)
-	or the end of the stream.
-	"""
-	result = ''
-	lastChar = ''
-	while True:
-		char = stream.read(1)
-		if char == '':
-			return
-		if (char == UnitSeparator or char == RecordSeparator) and lastChar == '\n':
-			return result[:-1]
-		result += char
-		lastChar = char

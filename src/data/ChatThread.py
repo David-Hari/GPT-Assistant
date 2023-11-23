@@ -20,81 +20,49 @@ class ChatThread:
 	title: str
 	"""The title of the thread"""
 
+	isUserTitle: bool
+	"""True if the user has given the title for this thread. If false, the AI can choose the title."""
+
 	messages: List[ChatMessage] = []
 	"""The list of messages in the thread, in ascending order of creation time."""
 
 
 	@classmethod
-	def fromStream(cls, stream: TextIO):
+	def fromDictionary(cls, dictionary):
 		"""
-		Reads a thread of chat messages from a text stream and returns a ChatThread object.
-		:param stream: A text stream (file-like object) containing the messages.
-		:return: A ChatThread object.
+		Creates a ChatThread object from the properties in a dictionary.
 		"""
 		obj = cls()
-
-		# Read metadata header
-		header = readChunk(stream)
-		metadata = json.loads(header)
-		if 'id' not in metadata:
-			raise ValueError('Chat thread is missing the \'id\' field.')
-		if 'created' not in metadata:
-			raise ValueError('Chat thread is missing the \'created\' field.')
-		obj.id = metadata.get('id')
-		obj.createdTimestamp = datetime.fromisoformat(metadata.get('created'))
-		obj.title = metadata.get('title', 'Untitled')
-
-		# Read the messages
-		obj.messages = []
-		message = ChatMessage.fromStream(stream)
-		while message:
-			obj.messages.append(message)
-			message = ChatMessage.fromStream(stream)
-
+		obj.id = dictionary['id']
+		obj.createdTimestamp = dictionary['created']
+		obj.title = dictionary['title']
+		obj.isUserTitle = bool(dictionary['userTitle'])
 		return obj
 
 
 	def __init__(self, apiObject: Optional[Thread] = None):
+		self.apiObject = None
 		if apiObject:
-			self.id = apiObject.id
-			self.createdTimestamp = datetime.utcfromtimestamp(apiObject.created_at)
-			self.title = apiObject.metadata.get('title', 'Untitled')
-			self.apiObject = apiObject  # Hold on to API object if we have it, as we might need additional properties from it
+			self.setAPIObject(apiObject)
 
 
-	def toStream(self, stream: TextIO):
+	def setAPIObject(self, apiObject: Thread):
 		"""
-		Writes the thread of chat messages to a text stream.
-		:param stream: A text stream (file-like object) to write the message to.
+		Sets the properties from an API object that came from a request to get this thread from the server.
 		"""
+		self.apiObject = apiObject
+		self.id = apiObject.id
+		self.createdTimestamp = datetime.utcfromtimestamp(apiObject.created_at)
+		self.title = apiObject.metadata.get('title', 'Untitled')
 
-		# Write metadata header
-		metadata = {
+
+	def toDictionary(self):
+		"""
+		Returns a dictionary with the properties of this chat thread object.
+		"""
+		return {
 			'id': self.id,
-			'created': self.createdTimestamp.isoformat(),
+			'created': self.createdTimestamp,
 			'title': self.title,
+			'userTitle': int(self.isUserTitle)
 		}
-		stream.write(json.dumps(metadata))
-		stream.write('\n' + RecordSeparator)
-
-		# Write each message
-		for message in self.messages:
-			message.toStream(stream)
-		pass
-
-
-def readChunk(stream: TextIO):
-	"""
-	Reads from the stream until it reaches either the end of a message (newline then record separator)
-	or the end of the stream.
-	"""
-	result = ''
-	lastChar = ''
-	while True:
-		char = stream.read(1)
-		if char == '':
-			return
-		if char == RecordSeparator and lastChar == '\n':
-			return result[:-1]
-		result += char
-		lastChar = char
