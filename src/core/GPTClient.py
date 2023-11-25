@@ -48,8 +48,8 @@ class GPTClient(QObject):
 		for filePath in self.chatsDirectory.iterdir():
 			if filePath.is_file() and filePath.suffix == '.txt':
 				try:
-					chatThread = self.api.beta.threads.retrieve(filePath.stem)
-					self.chatThreads[chatThread.id] = ChatThread(chatThread)
+					chatThread = ChatThread(self.api.beta.threads.retrieve(filePath.stem))
+					self.chatThreads[chatThread.id] = chatThread
 				except Exception as e:
 					print(f'Error retrieving chat thread {filePath.stem}: {str(e)}')
 		self.chatThreadListLoaded.emit()
@@ -79,8 +79,7 @@ class GPTClient(QObject):
 		"""
 		chatThread = ChatThread(self.api.beta.threads.create(metadata = {'title': title}))
 		self.chatThreads[chatThread.id] = chatThread
-		with open(self.chatsDirectory / f'{chatThread.id}.txt', 'w', encoding='utf-8') as file:
-			file.write('')
+		self.database.insertChatThread(chatThread)
 		self.chatThreadAdded.emit(chatThread)
 
 
@@ -94,15 +93,18 @@ class GPTClient(QObject):
 		file.unlink(missing_ok = True)
 
 
-	def loadMessages(self, chatThreadId: str):
+	def loadMessages(self, chatThreadId: str) -> list[ChatMessage]:
 		"""
 		Loads the messages from disk and retrieves and newer messages from the server.
 		:param chatThreadId: The ID of the chat thread the messages belong to.
 		:return: list of message objects
 		"""
-		# TODO: Load from file first, then retrieve 20 from server and check if any are newer. If so, append to file.
-		result = self.api.beta.threads.messages.list(chatThreadId, limit = 100, order = 'desc')
-		return reversed(result.data)
+		chatThread = self.chatThreads[chatThreadId]
+		# TODO: Load from database first, then retrieve 20 from server and check if any are newer. If so, add to database.
+		result = self.api.beta.threads.messages.list(chatThreadId, limit = 20, order = 'desc')
+		for each in reversed(result.data):
+			chatThread.messages.append(ChatMessage(each))
+		return chatThread.messages
 
 
 	def sendMessage(self, chatThreadId, messageText):

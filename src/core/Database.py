@@ -4,6 +4,7 @@ import sqlite3
 
 from openai.types.beta import Assistant
 
+from data.ChatMessage import ChatMessage
 from data.ChatThread import ChatThread
 
 
@@ -72,3 +73,9 @@ class Database:
 		with self.connection:
 			sql = 'insert into ChatThreads (id, created, title, userTitle) values (:id, :created, :title, :userTitle)'
 			self.connection.execute(sql, chatThread.toDictionary())
+
+
+	def insertMessage(self, message: ChatMessage):
+		with self.connection:
+			sql = 'insert into ChatMessages (id, threadId, created, role, content) values (:id, :threadId, :created, :role, :content)'
+			self.connection.execute(sql, message.toDictionary())
