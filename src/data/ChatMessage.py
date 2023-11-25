@@ -1,6 +1,5 @@
-import json
 from datetime import datetime
-from typing import List, Literal, Optional, TextIO
+from typing import List, Literal, Optional
 
 from openai.types.beta.threads import MessageContentText
 from openai.types.beta.threads.message_content_text import Text
@@ -12,24 +11,6 @@ UnitSeparator = '\x1F'
 
 
 class ChatMessage:
-	id: str
-	"""The identifier, which can be referenced in API endpoints."""
-
-	threadId: str
-	"""The chat thread ID that this message belongs to."""
-
-	createdTimestamp: datetime
-	"""The timestamp for when the message was created."""
-
-	role: Literal['user', 'assistant']
-	"""The entity that produced the message. One of `user` or `assistant`."""
-
-	content: List[Content] = []
-	"""The content of the message in array of text and/or images."""
-
-	fileIds: List[str] = []
-	"""A list of file IDs that the assistant should use. For tools that can access files."""
-
 
 	@classmethod
 	def fromDictionary(cls, dictionary):
@@ -46,9 +27,28 @@ class ChatMessage:
 
 
 	def __init__(self, apiObject: Optional[ThreadMessage] = None):
-		self.apiObject = None
+		self.id: Optional[str] = None
+		"""The identifier, which can be referenced in API endpoints."""
+
+		self.threadId: Optional[str] = None
+		"""The chat thread ID that this message belongs to."""
+
+		self.createdTimestamp: Optional[datetime] = None
+		"""The timestamp for when the message was created."""
+
+		self.role: Literal['user', 'assistant']
+		"""The entity that produced the message. One of `user` or `assistant`."""
+
+		self.content: List[Content] = []
+		"""The content of the message in array of text and/or images."""
+
+		self.fileIds: List[str] = []
+		"""A list of file IDs that the assistant should use. For tools that can access files."""
+
 		if apiObject:
 			self.setAPIObject(apiObject)
+		else:
+			self.apiObject = None
 
 
 	def setAPIObject(self, apiObject: ThreadMessage):
@@ -74,3 +74,7 @@ class ChatMessage:
 			'role': self.role,
 			'content': self.content[0].text.value
 		}
+
+
+	def __str__(self):
+		return 'ChatMessage(' + '\n'.join(content.text.value for content in self.content) + ')'

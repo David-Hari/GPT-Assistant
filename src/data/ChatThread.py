@@ -1,6 +1,5 @@
-import json
 from datetime import datetime
-from typing import List, Optional, TextIO
+from typing import List, Optional
 
 from openai.types.beta import Thread
 
@@ -11,21 +10,6 @@ RecordSeparator = '\x1E'
 
 
 class ChatThread:
-	id: str
-	"""The identifier, which can be referenced in API endpoints."""
-
-	createdTimestamp: datetime
-	"""The timestamp for when the thread was created."""
-
-	title: str
-	"""The title of the thread"""
-
-	isUserTitle: bool
-	"""True if the user has given the title for this thread. If false, the AI can choose the title."""
-
-	messages: List[ChatMessage] = []
-	"""The list of messages in the thread, in ascending order of creation time."""
-
 
 	@classmethod
 	def fromDictionary(cls, dictionary):
@@ -41,9 +25,25 @@ class ChatThread:
 
 
 	def __init__(self, apiObject: Optional[Thread] = None):
-		self.apiObject = None
+		self.id: Optional[str] = None
+		"""The identifier, which can be referenced in API endpoints."""
+
+		self.createdTimestamp: Optional[datetime] = None
+		"""The timestamp for when the thread was created."""
+
+		self.title: Optional[str]
+		"""The title of the thread"""
+
+		self.isUserTitle: bool = False
+		"""True if the user has given the title for this thread. If false, the AI can choose the title."""
+
+		self.messages: List[ChatMessage] = []
+		"""The list of messages in the thread, in ascending order of creation time."""
+
 		if apiObject:
 			self.setAPIObject(apiObject)
+		else:
+			self.apiObject = None
 
 
 	def setAPIObject(self, apiObject: Thread):
