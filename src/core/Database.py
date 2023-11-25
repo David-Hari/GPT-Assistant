@@ -4,6 +4,8 @@ import sqlite3
 
 from openai.types.beta import Assistant
 
+from data.ChatThread import ChatThread
+
 
 assistantsTableSchema = """
 Assistants (
@@ -17,7 +19,7 @@ threadTableSchema = """
 ChatThreads (
     id        text    primary key,
     created   timestamp,
-    title     text
+    title     text,
     userTitle integer
 )
 """
@@ -62,5 +64,11 @@ class Database:
 					'instructions': assistant.instructions
 				} for assistant in assistants
 			]
-			cursor.executemany('INSERT OR REPLACE INTO Assistants (id, created, name, instructions) ' +
-			                  'VALUES (:id, :created, :name, :instructions)', values)
+			sql = 'insert or replace into Assistants (id, created, name, instructions) values (:id, :created, :name, :instructions)'
+			cursor.executemany(sql, values)
+
+
+	def insertChatThread(self, chatThread: ChatThread):
+		with self.connection:
+			sql = 'insert into ChatThreads (id, created, title, userTitle) values (:id, :created, :title, :userTitle)'
+			self.connection.execute(sql, chatThread.toDictionary())
