@@ -1,6 +1,5 @@
 import asyncio
 import time
-from pathlib import Path
 
 from PySide6.QtCore import QObject, Signal, Slot
 from openai import OpenAI
@@ -17,10 +16,8 @@ class GPTClient(QObject):
 
 
 	# TODO: api: AsyncOpenAI
-	def __init__(self, api: OpenAI, defaultModel, database: Database, chatsDirectory: Path):
+	def __init__(self, api: OpenAI, defaultModel, database: Database):
 		super().__init__()
-		self.chatsDirectory = chatsDirectory
-		self.chatsDirectory.mkdir(exist_ok=True)
 
 		self.api = api
 		self.modelName = defaultModel
@@ -35,9 +32,10 @@ class GPTClient(QObject):
 		"""
 		Retrieve the assistants
 		"""
-		assistants = self.api.beta.assistants.list()
-		self.database.updateAssistants(assistants.data)
-		self.mainAssistant = next(each for each in assistants.data if each.name == 'Desktop Assistant')
+		#assistants = self.database.getAssistants()
+		assistants = self.api.beta.assistants.list().data
+		self.database.updateAssistants(assistants)
+		self.mainAssistant = next(each for each in assistants if each.name == 'Desktop Assistant')
 
 
 	def loadChatThreadList(self):
@@ -45,13 +43,10 @@ class GPTClient(QObject):
 		Gets the list of chat threads stored in the local data directory,
 		retrieving information from the API if necessary.
 		"""
-		for filePath in self.chatsDirectory.iterdir():
-			if filePath.is_file() and filePath.suffix == '.txt':
-				try:
-					chatThread = ChatThread(self.api.beta.threads.retrieve(filePath.stem))
-					self.chatThreads[chatThread.id] = chatThread
-				except Exception as e:
-					print(f'Error retrieving chat thread {filePath.stem}: {str(e)}')
+		for chatThread in self.database.getChatThreads():
+			self.chatThreads[chatThread.id] = chatThread
+
+		# Notify that we are done
 		self.chatThreadListLoaded.emit()
 	#@Slot()
 	#async def loadChatThreadList(self):
@@ -59,17 +54,13 @@ class GPTClient(QObject):
 	#	Gets the list of chat threads stored in the local data directory,
 	#	retrieving information from the API if necessary.
 	#	"""
-	#	# Get all file paths synchronously
-	#	filePaths = [filePath for filePath in self.chatsDirectory.iterdir() if filePath.is_file() and filePath.suffix == '.txt']
-
+	#	... synchronous database retrieval here
 	#	# Concurrently retrieve chat threads
-	#	tasks = [self.api.beta.threads.retrieve(file.stem) for file in filePaths]
+	#	tasks = [self.api.beta.threads.retrieve(id) for file in filePaths]
 	#	chatThreads = await asyncio.gather(*tasks, return_exceptions=True)
 	#	for chatThread in chatThreads:
-	#		self.chatThreads[chatThread.id] = ChatThread(chatThread)
-
-	#	# Notify that we are done
-	#	self.chatThreadListLoaded.emit()
+	#		self.chatThreads[chatThread.id] = ChatThread.fromAPIObject(chatThread)
+	#   ...
 
 
 	def createNewChat(self, title):
@@ -77,7 +68,7 @@ class GPTClient(QObject):
 		Starts a new chat thread with the given title.
 		:emits: chatThreadAdded
 		"""
-		chatThread = ChatThread(self.api.beta.threads.create(metadata = {'title': title}))
+		chatThread = ChatThread.fromAPIObject(self.api.beta.threads.create(metadata = {'title': title}))
 		self.chatThreads[chatThread.id] = chatThread
 		self.database.insertChatThread(chatThread)
 		self.chatThreadAdded.emit(chatThread)
@@ -89,22 +80,45 @@ class GPTClient(QObject):
 		:param chatThreadId: The ID of the chat thread
 		"""
 		self.api.beta.threads.delete(chatThreadId)
-		file = self.chatsDirectory / f'{chatThreadId}.txt'
-		file.unlink(missing_ok = True)
+		self.database.deleteChatThread(chatThreadId)
 
 
-	def loadMessages(self, chatThreadId: str) -> list[ChatMessage]:
+	def getMessages(self, chatThreadId: str) -> list[ChatMessage]:
 		"""
-		Loads the messages from disk and retrieves and newer messages from the server.
+		Gets the messages for the given thread, loading them if necessary.
 		:param chatThreadId: The ID of the chat thread the messages belong to.
 		:return: list of message objects
 		"""
 		chatThread = self.chatThreads[chatThreadId]
-		# TODO: Load from database first, then retrieve 20 from server and check if any are newer. If so, add to database.
-		result = self.api.beta.threads.messages.list(chatThreadId, limit = 20, order = 'desc')
-		for each in reversed(result.data):
-			chatThread.messages.append(ChatMessage(each))
+		if not chatThread.messages:
+			self.loadMessagesFor(chatThread)
 		return chatThread.messages
+
+
+	def loadMessagesFor(self, chatThread: ChatThread):
+		"""
+		Loads the messages from disk and retrieves newer messages from the server.
+		:param chatThread: The chat thread the messages belong to.
+		"""
+		# Get existing messages from database.
+		chatThread.messages = self.database.getMessagesForThread(chatThread.id)
+
+		# TODO: make this async and emit signal here with messages, then again once updates
+
+		# Retrieve recent messages from server and update database if there are any newer messages.
+		result = self.api.beta.threads.messages.list(chatThread.id, limit = 20, order = 'desc')
+		for apiMessage in reversed(result.data):
+			# Check if the message already exists, looking backward through existing messages since it's likely to be near the end
+			existing = next((msg for msg in reversed(chatThread.messages) if msg.id == apiMessage.id), None)
+			if existing:
+				existing.setAPIObject(apiMessage)
+				# TODO:
+				#if existing.isSame(apiMessage):
+				#   self.database.updateMessage(existing)
+			else:
+				newMessage = ChatMessage.fromAPIObject(apiMessage)
+				chatThread.messages.append(newMessage)
+				self.database.insertMessage(newMessage)
 
 
 	def sendMessage(self, chatThreadId, messageText):
@@ -114,7 +128,7 @@ class GPTClient(QObject):
 		:param messageText: Message text to send
 		:emits: messageReceived
 		"""
-		message = ChatMessage(self.api.beta.threads.messages.create(chatThreadId, role = 'user', content = messageText))
+		message = ChatMessage.fromAPIObject(self.api.beta.threads.messages.create(chatThreadId, role = 'user', content = messageText))
 		# TODO: Log message
 		run = self.api.beta.threads.runs.create(
 			thread_id = chatThreadId,

@@ -83,7 +83,7 @@ class MainWindow(QMainWindow):
 	def selectChatThread(self, chatThreadId):
 		self.currentChatThreadId = chatThreadId
 		self.ui.chatArea.clear()
-		messages = self.chatClient.loadMessages(self.currentChatThreadId)
+		messages = self.chatClient.getMessages(self.currentChatThreadId)
 		for message in messages:
 			self.appendMessage(message.content[0].text.value)
 

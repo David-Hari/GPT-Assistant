@@ -21,7 +21,7 @@ dbPath = Path("data/chats.db")
 database = Database(dbPath, not dbPath.exists())
 
 # TODO: AsyncOpenAI()
-chatClient = GPTClient(OpenAI(), config.model, database, Path('data/chats'))
+chatClient = GPTClient(OpenAI(), config.model, database)
 
 window = MainWindow(chatClient)
 window.show()
