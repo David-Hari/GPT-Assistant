@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 
 from openai.types.beta import Thread
@@ -24,7 +24,14 @@ class ChatThread:
 		return obj
 
 
-	def __init__(self, apiObject: Optional[Thread] = None):
+	@classmethod
+	def fromAPIObject(cls, apiObject: Thread):
+		obj = cls()
+		obj.setAPIObject(apiObject)
+		return obj
+
+
+	def __init__(self):
 		self.id: Optional[str] = None
 		"""The identifier, which can be referenced in API endpoints."""
 
@@ -40,10 +47,7 @@ class ChatThread:
 		self.messages: List[ChatMessage] = []
 		"""The list of messages in the thread, in ascending order of creation time."""
 
-		if apiObject:
-			self.setAPIObject(apiObject)
-		else:
-			self.apiObject = None
+		self.apiObject = None
 
 
 	def setAPIObject(self, apiObject: Thread):
@@ -52,7 +56,7 @@ class ChatThread:
 		"""
 		self.apiObject = apiObject
 		self.id = apiObject.id
-		self.createdTimestamp = datetime.utcfromtimestamp(apiObject.created_at)
+		self.createdTimestamp = datetime.fromtimestamp(apiObject.created_at, timezone.utc)
 		self.title = apiObject.metadata.get('title', 'Untitled')
 
 

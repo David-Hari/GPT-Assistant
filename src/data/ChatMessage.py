@@ -1,5 +1,5 @@
-from datetime import datetime
-from typing import List, Literal, Optional
+from datetime import datetime, timezone
+from typing import List, Optional
 
 from openai.types.beta.threads import MessageContentText
 from openai.types.beta.threads.message_content_text import Text
@@ -26,7 +26,14 @@ class ChatMessage:
 		return obj
 
 
-	def __init__(self, apiObject: Optional[ThreadMessage] = None):
+	@classmethod
+	def fromAPIObject(cls, apiObject: ThreadMessage):
+		obj = cls()
+		obj.setAPIObject(apiObject)
+		return obj
+
+
+	def __init__(self):
 		self.id: Optional[str] = None
 		"""The identifier, which can be referenced in API endpoints."""
 
@@ -36,7 +43,7 @@ class ChatMessage:
 		self.createdTimestamp: Optional[datetime] = None
 		"""The timestamp for when the message was created."""
 
-		self.role: Literal['user', 'assistant']
+		self.role: Optional[str] = None
 		"""The entity that produced the message. One of `user` or `assistant`."""
 
 		self.content: List[Content] = []
@@ -45,10 +52,7 @@ class ChatMessage:
 		self.fileIds: List[str] = []
 		"""A list of file IDs that the assistant should use. For tools that can access files."""
 
-		if apiObject:
-			self.setAPIObject(apiObject)
-		else:
-			self.apiObject = None
+		self.apiObject = None
 
 
 	def setAPIObject(self, apiObject: ThreadMessage):
@@ -58,7 +62,7 @@ class ChatMessage:
 		self.apiObject = apiObject
 		self.id = apiObject.id
 		self.threadId = apiObject.thread_id
-		self.createdTimestamp = datetime.utcfromtimestamp(apiObject.created_at)
+		self.createdTimestamp = datetime.fromtimestamp(apiObject.created_at, timezone.utc)
 		self.role = apiObject.role
 		self.content = apiObject.content
 
