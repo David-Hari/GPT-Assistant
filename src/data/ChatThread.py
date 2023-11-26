@@ -38,7 +38,7 @@ class ChatThread:
 		self.createdTimestamp: Optional[datetime] = None
 		"""The timestamp for when the thread was created."""
 
-		self.title: Optional[str]
+		self.title: Optional[str] = None
 		"""The title of the thread"""
 
 		self.isUserTitle: bool = False

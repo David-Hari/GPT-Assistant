@@ -33,6 +33,7 @@ class GPTClient(QObject):
 		"""
 		Retrieve the assistants
 		"""
+		logger.debug(f'Loading assistants')
 		#assistants = self.database.getAssistants()
 		assistants = self.api.beta.assistants.list().data
 		self.database.updateAssistants(assistants)

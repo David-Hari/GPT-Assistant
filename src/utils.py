@@ -1,12 +1,21 @@
 import logging
+from typing import Optional
 
 
-logger = logging.getLogger('app')
-logger.setLevel(logging.DEBUG)
+logger: Optional[logging.Logger] = None
 
-handler = logging.StreamHandler()
-#handler = logging.FileHandler(log_file)
+def setupLogger(config):
+	global logger
+	logger = logging.getLogger('app')
+	logger.setLevel(config.logLevel)
 
-handler.setLevel(logging.DEBUG)
-handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S'))
-logger.addHandler(handler)
+	if config.logOutput == 'console':
+		handler = logging.StreamHandler()
+	elif config.logOutput == 'file':
+		handler = logging.FileHandler(config.logFilePath)
+	else:
+		raise Exception(f'Unknown log output: {config.logOutput}')
+
+	handler.setLevel(logging.DEBUG)
+	handler.setFormatter(logging.Formatter('%(asctime)s  %(levelname)s  %(message)s', datefmt='%Y-%m-%d %H:%M:%S'))
+	logger.addHandler(handler)

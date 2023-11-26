@@ -8,13 +8,25 @@ from PySide6.QtAsyncio import QAsyncioEventLoopPolicy
 from PySide6.QtWidgets import QApplication
 from openai import OpenAI
 
+from utils import setupLogger
+
+
+defaultConf = {
+	'logLevel': 'INFO',
+	'logOutput': 'console'
+}
+config = OmegaConf.merge(defaultConf, OmegaConf.load('config.yaml'))
+
+setupLogger(config)
+
+# These need to be imported after the logger is initialized
+from utils import logger
 from core.Database import Database
 from core.GPTClient import GPTClient
 from windows.MainWindow import MainWindow
 
 
-config = OmegaConf.load('config.yaml')
-
+logger.debug('Starting application')
 app = QApplication(sys.argv)
 
 dbPath = Path("data/chats.db")
@@ -23,6 +35,7 @@ database = Database(dbPath, not dbPath.exists())
 # TODO: AsyncOpenAI()
 chatClient = GPTClient(OpenAI(), config.model, database)
 
+logger.debug('Opening window')
 window = MainWindow(chatClient)
 window.show()
 
