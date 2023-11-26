@@ -7,6 +7,7 @@ from openai import OpenAI
 from core.Database import Database
 from data.ChatMessage import ChatMessage
 from data.ChatThread import ChatThread
+from utils import logger
 
 
 class GPTClient(QObject):
@@ -43,6 +44,7 @@ class GPTClient(QObject):
 		Gets the list of chat threads stored in the local data directory,
 		retrieving information from the API if necessary.
 		"""
+		logger.debug(f'Loading chat threads')
 		for chatThread in self.database.getChatThreads():
 			self.chatThreads[chatThread.id] = chatThread
 
@@ -68,6 +70,7 @@ class GPTClient(QObject):
 		Starts a new chat thread with the given title.
 		:emits: chatThreadAdded
 		"""
+		logger.debug(f'Creating new chat named {title}')
 		chatThread = ChatThread.fromAPIObject(self.api.beta.threads.create(metadata = {'title': title}))
 		self.chatThreads[chatThread.id] = chatThread
 		self.database.insertChatThread(chatThread)
@@ -79,6 +82,7 @@ class GPTClient(QObject):
 		Deletes a chat thread and all it's messages from the server and from disk
 		:param chatThreadId: The ID of the chat thread
 		"""
+		logger.info(f'Deleting chat thread {chatThreadId}')
 		self.api.beta.threads.delete(chatThreadId)
 		self.database.deleteChatThread(chatThreadId)
 
@@ -100,6 +104,8 @@ class GPTClient(QObject):
 		Loads the messages from disk and retrieves newer messages from the server.
 		:param chatThread: The chat thread the messages belong to.
 		"""
+		logger.debug(f'Loading messages for {chatThread.id}')
+
 		# Get existing messages from database.
 		chatThread.messages = self.database.getMessagesForThread(chatThread.id)
 
@@ -116,6 +122,7 @@ class GPTClient(QObject):
 				#if existing.isSame(apiMessage):
 				#   self.database.updateMessage(existing)
 			else:
+				logger.info(f'Adding new message from server: {apiMessage.id}')
 				newMessage = ChatMessage.fromAPIObject(apiMessage)
 				chatThread.messages.append(newMessage)
 				self.database.insertMessage(newMessage)
@@ -128,6 +135,8 @@ class GPTClient(QObject):
 		:param messageText: Message text to send
 		:emits: messageReceived
 		"""
+		logger.debug(f'Sending message for {chatThreadId}')
+
 		message = ChatMessage.fromAPIObject(self.api.beta.threads.messages.create(chatThreadId, role = 'user', content = messageText))
 		# TODO: Log message
 		run = self.api.beta.threads.runs.create(
