@@ -1,11 +1,4 @@
 
-* Save to SQL database - chats.sql.
-   "assistants" table with entries for "main" and "threadNamer"
-
-   Just store first message content in database for now.
-   When the need arises, can change that. Maybe each row can have a sequence number, or a separate table MessageContents
-
-
 * Create "Thread namer" assistant that operates in the background to update the name of a thread.
   Will run after first AI response then again after 10 responses and again after 100 (or something like that).
   It can probably be ran with the same thread ids that the main assistant uses, but only while main assistant is not running.
