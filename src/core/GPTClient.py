@@ -125,8 +125,7 @@ class GPTClient(QObject):
 			else:
 				logger.info(f'Adding new message from server: {apiMessage.id}')
 				newMessage = ChatMessage.fromAPIObject(apiMessage)
-				chatThread.messages.append(newMessage)
-				self.database.insertMessage(newMessage)
+				self.addNewMessage(chatThread, newMessage)
 
 
 	def sendMessage(self, chatThreadId, messageText):
@@ -137,9 +136,11 @@ class GPTClient(QObject):
 		:emits: messageReceived
 		"""
 		logger.debug(f'Sending message for {chatThreadId}')
+		chatThread = self.chatThreads[chatThreadId]
 
-		message = ChatMessage.fromAPIObject(self.api.beta.threads.messages.create(chatThreadId, role = 'user', content = messageText))
-		# TODO: Log message
+		userMessage = ChatMessage.fromAPIObject(self.api.beta.threads.messages.create(chatThreadId, role = 'user', content = messageText))
+		self.addNewMessage(chatThread, userMessage)
+
 		run = self.api.beta.threads.runs.create(
 			thread_id = chatThreadId,
 			assistant_id = self.mainAssistant.id
@@ -150,5 +151,11 @@ class GPTClient(QObject):
 				thread_id = chatThreadId,
 				run_id = run.id
 			)
-		messages = self.api.beta.threads.messages.list(chatThreadId)
-		self.messageReceived.emit(messages.data[0].content[0].text.value)
+		responseMessage = ChatMessage.fromAPIObject(self.api.beta.threads.messages.list(chatThreadId).data[0])
+		self.addNewMessage(chatThread, responseMessage)
+		self.messageReceived.emit(responseMessage.content[0].text.value)
+
+
+	def addNewMessage(self, chatThread: ChatThread, message: ChatMessage):
+		chatThread.messages.append(message)
+		self.database.insertMessage(message)
