@@ -63,7 +63,7 @@ class Database:
 					id = row['id'],
 					created_at = row['created'].timestamp(),
 					name = row['name'],
-					model = 'test',#row['model'],
+					model = row['model'],
 					description = '',
 					file_ids = [],
 					tools = []
