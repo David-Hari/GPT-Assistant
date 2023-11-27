@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 import sqlite3
 
@@ -43,6 +43,9 @@ class Database:
 		self.connection.row_factory = sqlite3.Row
 		if shouldCreate:
 			self.createDatabase()
+
+		# From https://github.com/python/cpython/issues/63265#issuecomment-1093628499
+		sqlite3.register_converter('timestamp', timezoneAwareTimestampAdapter)
 
 
 	def createDatabase(self):
@@ -134,3 +137,31 @@ class Database:
 	def deleteMessage(self, messageId: str):
 		with self.connection:
 			self.connection.execute('delete from ChatMessages where id = ?', (messageId,))
+
+
+
+# From https://github.com/python/cpython/issues/63265#issuecomment-1093628499
+def timezoneAwareTimestampAdapter(val):
+	datePart, timePart = val.split(b' ')
+	year, month, day = map(int, datePart.split(b'-'))
+
+	if b'+' in timePart:
+		timePart, tzOffset = timePart.rsplit(b'+', 1)
+		if tzOffset == b'00:00':
+			timezoneInfo = timezone.utc
+		else:
+			hours, minutes = map(int, tzOffset.split(b':', 1))
+			timezoneInfo = timezone(timedelta(hours=hours, minutes=minutes))
+	else:
+		timezoneInfo = None
+
+	timePartFull = timePart.split(b'.')
+	hours, minutes, seconds = map(int, timePartFull[0].split(b':'))
+
+	if len(timePartFull) == 2:
+		microseconds = int('{:0<6.6}'.format(timePartFull[1].decode()))
+	else:
+		microseconds = 0
+
+	val = datetime(year, month, day, hours, minutes, seconds, microseconds, timezoneInfo)
+	return val
