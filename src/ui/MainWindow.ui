@@ -71,7 +71,11 @@
         </widget>
        </item>
        <item>
-        <widget class="QListView" name="chatThreadsList"/>
+        <widget class="QListView" name="chatThreadsList">
+         <property name="uniformItemSizes">
+          <bool>true</bool>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>

@@ -1,5 +1,9 @@
+from typing import Collection
+
 from PySide6.QtCore import Qt, QAbstractListModel, QModelIndex, QEvent, QSize, QRect
 from PySide6.QtWidgets import QStyledItemDelegate, QLineEdit, QStyleOptionButton, QStyle, QApplication
+
+from data.ChatThread import ChatThread
 
 
 """
@@ -9,9 +13,9 @@ It shows an edit and delete button when hovered over, and the title can be edite
 
 class ChatThreadListModel(QAbstractListModel):
 
-	def __init__(self, chatThreads, parent = None):
+	def __init__(self, parent = None):
 		super(ChatThreadListModel, self).__init__(parent)
-		self.chatThreads = []
+		self.chatThreads: list[ChatThread] = []
 
 
 	def rowCount(self, parent = QModelIndex()):
@@ -25,6 +29,21 @@ class ChatThreadListModel(QAbstractListModel):
 		if role == Qt.UserRole:
 			return chatThread.id
 		return None
+
+
+	def populateList(self, chatThreads: Collection[ChatThread]):
+		self.chatThreads = sorted(chatThreads, key = lambda each: each.createdTimestamp, reverse = True)
+		self.layoutChanged.emit()
+
+
+	def addItem(self, chatThread: ChatThread):
+		self.chatThreads.insert(0, chatThread)
+		self.layoutChanged.emit()
+
+
+	def deleteItem(self, index: QModelIndex):
+		del self.chatThreads[index.row()]
+		self.layoutChanged.emit()
 
 
 

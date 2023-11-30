@@ -51,6 +51,7 @@ class Ui_MainWindow(object):
 
         self.chatThreadsList = QListView(self.sidebar)
         self.chatThreadsList.setObjectName(u"chatThreadsList")
+        self.chatThreadsList.setUniformItemSizes(True)
 
         self.verticalLayout_3.addWidget(self.chatThreadsList)
 
