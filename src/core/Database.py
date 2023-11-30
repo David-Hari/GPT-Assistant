@@ -153,7 +153,7 @@ def timezoneAwareTimestampAdapter(val):
 			hours, minutes = map(int, tzOffset.split(b':', 1))
 			timezoneInfo = timezone(timedelta(hours=hours, minutes=minutes))
 	else:
-		timezoneInfo = None
+		timezoneInfo = timezone.utc
 
 	timePartFull = timePart.split(b'.')
 	hours, minutes, seconds = map(int, timePartFull[0].split(b':'))
