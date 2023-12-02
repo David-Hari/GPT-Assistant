@@ -1,7 +1,7 @@
 from typing import Collection
 
-from PySide6.QtCore import Qt, QAbstractListModel, QModelIndex, QEvent, QSize, QRect
-from PySide6.QtWidgets import QStyledItemDelegate, QLineEdit, QStyleOptionButton, QStyle, QApplication
+from PySide6.QtCore import Qt, QAbstractListModel, QModelIndex
+from PySide6.QtWidgets import QStyledItemDelegate, QLineEdit, QAbstractItemDelegate
 
 from data.ChatThread import ChatThread
 
@@ -24,11 +24,22 @@ class ChatThreadListModel(QAbstractListModel):
 
 	def data(self, index, role = Qt.DisplayRole):
 		chatThread = self.chatThreads[index.row()]
-		if role == Qt.DisplayRole:
-			return chatThread.title
 		if role == Qt.UserRole:
 			return chatThread.id
+		if role == Qt.DisplayRole:
+			return chatThread.title
+		if role == Qt.ToolTipRole:
+			return 'Created: ' + chatThread.createdTimestamp.strftime("%Y-%m-%d %H:%M:%S")
 		return None
+
+
+	def setData(self, index, value, role = Qt.EditRole):
+		if role == Qt.EditRole:
+			chatThread = self.chatThreads[index.row()]
+			#chatThread.setTitle(value)
+			self.dataChanged.emit(index, index, [role])
+			return True
+		return False
 
 
 	def populateList(self, chatThreads: Collection[ChatThread]):
@@ -47,6 +58,7 @@ class ChatThreadListModel(QAbstractListModel):
 
 
 
+
 class ChatThreadItemDelegate(QStyledItemDelegate):
 
 	def __init__(self, parent = None):
@@ -54,66 +66,22 @@ class ChatThreadItemDelegate(QStyledItemDelegate):
 
 
 	def createEditor(self, parent, option, index):
-		# Create a custom editor widget (in this case, a QLineEdit)
 		editor = QLineEdit(parent)
+		editor.editingFinished.connect(self.commitAndCloseEditor)
 		return editor
 
 
-	def setEditorData(self, editor, index):
-		# Set data to the editor widget based on the model index
-		text = index.data(Qt.DisplayRole)
-		editor.setText(text)
+	def setEditorData(self, editor: QLineEdit, index):
+		# Set the current text of the editor to the existing data
+		editor.setText(index.model().data(index, Qt.DisplayRole))
 
 
-	def setModelData(self, editor, model, index):
-		# Set data back to the model when editing is finished
-		model.setData(index, editor.text(), Qt.DisplayRole)
+	def setModelData(self, editor: QLineEdit, model, index):
+		# Update the model data when editing is finished
+		model.setData(index, editor.text())
 
 
-	def updateEditorGeometry(self, editor, option, index):
-		# Update the geometry of the editor widget
-		editor.setGeometry(option.rect)
-
-
-	def editorEvent(self, event, model, option, index):
-		# Decide if the mouse event is on your button, and call delete if it is
-		if event.type() == QEvent.MouseButtonRelease:
-			return True
-			# Check if the click is on the button's rect and perform action
-			#if button_rect.contains(event.pos()):
-				#self.parent().deleteChatThread(index.row())  # Call the delete slot on MainWindow
-		return False
-
-
-	def paint(self, painter, option, index):
-		super(ChatThreadItemDelegate, self).paint(painter, option, index)
-
-		#editButtonOption = QStyleOptionButton()
-		#editButtonOption.state = QStyle.State_Enabled
-		#editButtonOption.text = 'E'
-		#editButtonOption.rect = buttonRect(option.rect, 1)
-
-		# Draw the button using the current style
-		#QApplication.style().drawControl(QStyle.CE_PushButton, editButtonOption, painter)
-
-		deleteButtonOption = QStyleOptionButton()
-		deleteButtonOption.state = QStyle.State_Enabled
-		deleteButtonOption.text = 'X'
-		deleteButtonOption.rect = buttonRect(option.rect, 0)
-
-		# Draw the button using the current style
-		QApplication.style().drawControl(QStyle.CE_PushButton, deleteButtonOption, painter)
-
-
-
-def buttonRect(parentRect, position):
-	"""
-	Helper method to define the button rect. Align to the right, vertically centered.
-	:param parentRect: Rectangle of the parent item
-	:param position: Numeric position from right side (i.e. 0 = farthest to the right)
-	"""
-	buttonSize = QSize(16, 16)
-	spacing = 4
-	x = parentRect.right() - ((position + 1) * (buttonSize.width() + spacing))
-	y = parentRect.center().y() - buttonSize.height() / 2
-	return QRect(x, y, buttonSize.width(), buttonSize.height())
+	def commitAndCloseEditor(self):
+		editor = self.sender()
+		self.commitData.emit(editor)
+		self.closeEditor.emit(editor, QAbstractItemDelegate.NoHint)

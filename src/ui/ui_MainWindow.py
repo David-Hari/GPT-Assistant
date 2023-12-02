@@ -15,10 +15,10 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QComboBox, QFrame, QGridLayout,
-    QHBoxLayout, QListView, QMainWindow, QPlainTextEdit,
-    QPushButton, QSizePolicy, QSpacerItem, QTextEdit,
-    QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QAbstractItemView, QApplication, QComboBox, QFrame,
+    QGridLayout, QHBoxLayout, QListView, QMainWindow,
+    QPlainTextEdit, QPushButton, QSizePolicy, QSpacerItem,
+    QTextEdit, QVBoxLayout, QWidget)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -51,6 +51,7 @@ class Ui_MainWindow(object):
 
         self.chatThreadsList = QListView(self.sidebar)
         self.chatThreadsList.setObjectName(u"chatThreadsList")
+        self.chatThreadsList.setEditTriggers(QAbstractItemView.EditKeyPressed)
         self.chatThreadsList.setUniformItemSizes(True)
 
         self.verticalLayout_3.addWidget(self.chatThreadsList)

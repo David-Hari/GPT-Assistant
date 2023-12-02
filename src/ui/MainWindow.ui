@@ -72,6 +72,9 @@
        </item>
        <item>
         <widget class="QListView" name="chatThreadsList">
+         <property name="editTriggers">
+          <set>QAbstractItemView::EditKeyPressed</set>
+         </property>
          <property name="uniformItemSizes">
           <bool>true</bool>
          </property>

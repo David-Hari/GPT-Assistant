@@ -1,5 +1,6 @@
-from PySide6.QtCore import Qt, Slot, QModelIndex
-from PySide6.QtWidgets import QMainWindow, QListWidgetItem
+from PySide6.QtCore import Qt, QModelIndex
+from PySide6.QtGui import QAction
+from PySide6.QtWidgets import QMainWindow, QMenu
 
 from core.GPTClient import GPTClient
 from ui.ChatThreadList import ChatThreadListModel, ChatThreadItemDelegate
@@ -21,34 +22,33 @@ class MainWindow(QMainWindow):
 			self.setStyleSheet(file.read())
 
 		self.chatThreadListModel = ChatThreadListModel()
+		self.chatThreadDelegate = ChatThreadItemDelegate(self.ui.chatThreadsList)
 		self.ui.chatThreadsList.setModel(self.chatThreadListModel)
-		self.ui.chatThreadsList.setItemDelegate(ChatThreadItemDelegate(self.ui.chatThreadsList))
+		self.ui.chatThreadsList.setItemDelegate(self.chatThreadDelegate)
+		self.ui.chatThreadsList.setContextMenuPolicy(Qt.CustomContextMenu)
+		self.ui.chatThreadsList.customContextMenuRequested.connect(self.showChatThreadMenu)
 		self.ui.chatThreadsList.selectionModel().currentChanged.connect(self.chatThreadChanged)
+		self.chatThreadDelegate.commitData.connect(self.handleTitleEditFinished)
 
 		self.chatClient.chatThreadListLoaded.connect(self.chatThreadListLoaded)
 		self.chatClient.chatThreadAdded.connect(self.addChatThreadToList)
 		self.chatClient.messageReceived.connect(self.appendMessage)
 
 
-	@Slot()
 	def addChatThreadToList(self, chatThread):
 		self.chatThreadListModel.addItem(chatThread)
 
 
-
-	@Slot()
 	def chatThreadListLoaded(self):
 		""" Populate the sidebar with the chat threads """
 		self.chatThreadListModel.populateList(self.chatClient.chatThreads.values())
 		self.currentChatThreadId = self.chatThreadListModel.chatThreads[0].id
 
 
-	@Slot()
 	def createNewChat(self):
 		self.chatClient.createNewChat('New Chat')
 
 
-	@Slot()
 	def chatThreadChanged(self, current: QModelIndex, previous: QModelIndex = None):
 		self.selectChatThread(current.data(Qt.UserRole))
 
@@ -61,14 +61,38 @@ class MainWindow(QMainWindow):
 			self.appendMessage('[' + message.role + ']  ' + message.content[0].text.value)
 
 
-	@Slot()
-	def deleteChatThread(self, item: QListWidgetItem):
-		self.chatClient.deleteChatThread(item.data(Qt.UserRole))
-		self.chatThreadListModel.deleteItem(item)  # TODO: Pass index
-		# TODO: If current thread is deleted, either select next one or blank
+	def editChatThreadTitle(self, index: QModelIndex):
+		self.ui.chatThreadsList.edit(index)
 
 
-	@Slot()
+	def handleTitleEditFinished(self):
+		pass
+
+
+	def deleteChatThread(self, index: QModelIndex):
+		self.chatClient.deleteChatThread(index.data(Qt.UserRole))
+		self.chatThreadListModel.deleteItem(index)
+		# TODO: If current thread is deleted, either select next one or make message window blank
+
+
+	def showChatThreadMenu(self, position):
+		index = self.ui.chatThreadsList.indexAt(position)
+		if index.isValid():
+			menu = QMenu(self.ui.chatThreadsList)
+
+			editTitleAction = QAction("Edit Title", self)
+			editTitleAction.triggered.connect(lambda: self.editChatThreadTitle(index))
+			menu.addAction(editTitleAction)
+
+			menu.addSeparator()
+
+			deleteAction = QAction("Delete", self)
+			deleteAction.triggered.connect(lambda: self.deleteChatThread(index))
+			menu.addAction(deleteAction)
+
+			menu.exec(self.ui.chatThreadsList.mapToGlobal(position))
+
+
 	def sendMessage(self):
 		message = self.ui.messageTextBox.document().toPlainText()
 		if message != '':
@@ -77,7 +101,6 @@ class MainWindow(QMainWindow):
 			self.ui.messageTextBox.clear()
 
 
-	@Slot(str)
 	def appendMessage(self, messageText):
 		"""
 		Appends the given message text to the chat window
