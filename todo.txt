@@ -1,9 +1,13 @@
 
+* Store window position and other settings using Qt settings
+
 * Create "Thread namer" assistant that operates in the background to update the name of a thread.
   Will run after first AI response then again after 10 responses and again after 100 (or something like that).
   It can probably be ran with the same thread ids that the main assistant uses, but only while main assistant is not running.
   If user renames it, use metadata on thread to flag it so that it won't be renamed. If user clears name then update it again.
   Use a cheaper model like gpt3.5
+  Maybe provide previous title to it, so it can determine if it needs to change.
+  Maybe set to json mode to force it to respond with just the title.
 
 * See if I can limit the context window for each thread. Lower it to maybe a few thousand to save cost.
 

@@ -42,6 +42,7 @@ window.show()
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 asyncio.set_event_loop_policy(QAsyncioEventLoopPolicy())
+# TODO: Maybe this should be signalled from MainWindow
 #asyncio.ensure_future(chatClient.loadChatThreadList())
 chatClient.loadChatThreadList()
 asyncio.get_event_loop().run_forever()
