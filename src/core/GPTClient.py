@@ -10,6 +10,7 @@ from data.ChatThread import ChatThread
 from utils import logger
 
 
+
 class GPTClient(QObject):
 	chatThreadListLoaded = Signal()
 	chatThreadAdded = Signal(object)
@@ -76,6 +77,15 @@ class GPTClient(QObject):
 		self.chatThreads[chatThread.id] = chatThread
 		self.database.insertChatThread(chatThread)
 		self.chatThreadAdded.emit(chatThread)
+
+
+	def updateChatThreadTitle(self, chatThreadId, newTitle, isFromUser):
+		logger.info(('User' if isFromUser else 'Assistant') + f' updating title of chat thread {chatThreadId} to "{newTitle}"')
+		chatThread = self.chatThreads[chatThreadId]
+		chatThread.title = newTitle
+		chatThread.isUserTitle = isFromUser
+		self.api.beta.threads.update(chatThreadId, metadata = {'title': chatThread.title})
+		self.database.updateChatThread(chatThread)
 
 
 	def deleteChatThread(self, chatThreadId):

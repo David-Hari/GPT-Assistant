@@ -97,6 +97,12 @@ class Database:
 			self.connection.execute(sql, chatThread.toDictionary())
 
 
+	def updateChatThread(self, chatThread: ChatThread):
+		with self.connection:
+			sql = 'update ChatThreads set title = :title, userTitle = :userTitle where id = :id'
+			self.connection.execute(sql, chatThread.toDictionary())
+
+
 	def insertMessage(self, message: ChatMessage):
 		with self.connection:
 			sql = 'insert into ChatMessages (id, threadId, created, role, content) values (:id, :threadId, :created, :role, :content)'

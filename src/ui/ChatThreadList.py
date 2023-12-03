@@ -1,17 +1,14 @@
 from typing import Collection
 
-from PySide6.QtCore import Qt, QAbstractListModel, QModelIndex
-from PySide6.QtWidgets import QStyledItemDelegate, QLineEdit, QAbstractItemDelegate
+from PySide6.QtCore import Qt, QAbstractListModel, QModelIndex, Signal
+from PySide6.QtWidgets import QStyledItemDelegate, QLineEdit
 
 from data.ChatThread import ChatThread
 
 
-"""
-Implements a custom widget for items in the chat thread list.
-It shows an edit and delete button when hovered over, and the title can be edited.
-"""
 
 class ChatThreadListModel(QAbstractListModel):
+	titleEdited = Signal(str, str)
 
 	def __init__(self, parent = None):
 		super(ChatThreadListModel, self).__init__(parent)
@@ -22,11 +19,15 @@ class ChatThreadListModel(QAbstractListModel):
 		return len(self.chatThreads)
 
 
+	def flags(self, index: QModelIndex):
+		return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable | Qt.ItemNeverHasChildren
+
+
 	def data(self, index, role = Qt.DisplayRole):
 		chatThread = self.chatThreads[index.row()]
 		if role == Qt.UserRole:
 			return chatThread.id
-		if role == Qt.DisplayRole:
+		if role == Qt.DisplayRole or role == Qt.EditRole:
 			return chatThread.title
 		if role == Qt.ToolTipRole:
 			return 'Created: ' + chatThread.createdTimestamp.strftime("%Y-%m-%d %H:%M:%S")
@@ -36,8 +37,10 @@ class ChatThreadListModel(QAbstractListModel):
 	def setData(self, index, value, role = Qt.EditRole):
 		if role == Qt.EditRole:
 			chatThread = self.chatThreads[index.row()]
-			#chatThread.setTitle(value)
-			self.dataChanged.emit(index, index, [role])
+			if chatThread and chatThread.title != value:
+				chatThread.title = value
+				self.dataChanged.emit(index, index, [role])
+				self.titleEdited.emit(chatThread.id, chatThread.title)
 			return True
 		return False
 
@@ -66,22 +69,14 @@ class ChatThreadItemDelegate(QStyledItemDelegate):
 
 
 	def createEditor(self, parent, option, index):
-		editor = QLineEdit(parent)
-		editor.editingFinished.connect(self.commitAndCloseEditor)
-		return editor
+		return QLineEdit(parent)
 
 
-	def setEditorData(self, editor: QLineEdit, index):
-		# Set the current text of the editor to the existing data
-		editor.setText(index.model().data(index, Qt.DisplayRole))
+	def setEditorData(self, editor: QLineEdit, index: QModelIndex):
+		""" Set the current text of the editor to the existing data """
+		editor.setText(index.data(Qt.DisplayRole))
 
 
 	def setModelData(self, editor: QLineEdit, model, index):
-		# Update the model data when editing is finished
-		model.setData(index, editor.text())
-
-
-	def commitAndCloseEditor(self):
-		editor = self.sender()
-		self.commitData.emit(editor)
-		self.closeEditor.emit(editor, QAbstractItemDelegate.NoHint)
+		""" Update the model data when editing is finished """
+		model.setData(index, editor.text(), Qt.EditRole)

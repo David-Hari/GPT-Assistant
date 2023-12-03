@@ -5,6 +5,7 @@ from PySide6.QtWidgets import QMainWindow, QMenu
 from core.GPTClient import GPTClient
 from ui.ChatThreadList import ChatThreadListModel, ChatThreadItemDelegate
 from ui.ui_MainWindow import Ui_MainWindow
+from utils import logger
 
 
 
@@ -28,7 +29,7 @@ class MainWindow(QMainWindow):
 		self.ui.chatThreadsList.setContextMenuPolicy(Qt.CustomContextMenu)
 		self.ui.chatThreadsList.customContextMenuRequested.connect(self.showChatThreadMenu)
 		self.ui.chatThreadsList.selectionModel().currentChanged.connect(self.chatThreadChanged)
-		self.chatThreadDelegate.commitData.connect(self.handleTitleEditFinished)
+		self.chatThreadListModel.titleEdited.connect(self.handleTitleEditFinished)
 
 		self.chatClient.chatThreadListLoaded.connect(self.chatThreadListLoaded)
 		self.chatClient.chatThreadAdded.connect(self.addChatThreadToList)
@@ -62,11 +63,13 @@ class MainWindow(QMainWindow):
 
 
 	def editChatThreadTitle(self, index: QModelIndex):
+		logger.debug('Start editing title')
 		self.ui.chatThreadsList.edit(index)
 
 
-	def handleTitleEditFinished(self):
-		pass
+	def handleTitleEditFinished(self, chatThreadId, newTitle):
+		logger.debug('Finished editing title')
+		self.chatClient.updateChatThreadTitle(chatThreadId, newTitle, True)
 
 
 	def deleteChatThread(self, index: QModelIndex):
