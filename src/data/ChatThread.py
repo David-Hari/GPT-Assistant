@@ -6,8 +6,6 @@ from openai.types.beta import Thread
 from data.ChatMessage import ChatMessage
 
 
-RecordSeparator = '\x1E'
-
 
 class ChatThread:
 

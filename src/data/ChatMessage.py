@@ -6,9 +6,6 @@ from openai.types.beta.threads.message_content_text import Text
 from openai.types.beta.threads.thread_message import ThreadMessage, Content
 
 
-RecordSeparator = '\x1E'
-UnitSeparator = '\x1F'
-
 
 class ChatMessage:
 
