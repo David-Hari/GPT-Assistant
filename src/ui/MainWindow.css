@@ -36,8 +36,8 @@
 
 #chatThreadsList::item {
 	height: 26px;
-	margin: 4px 2px;
-	padding: 6px;
+	margin: 2px;
+	padding: 4px 6px;
 	border-radius: 4px;
 	color: hsl(0, 0%, 80%);
 }
