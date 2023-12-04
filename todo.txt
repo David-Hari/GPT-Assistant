@@ -1,6 +1,12 @@
 
 * Store window position and other settings using Qt settings
 
+* Import threads from ChatGPT.
+  Can get threads with https://chat.openai.com/backend-api/conversations?offset=0&limit=100&order=updated
+  and messages with https://chat.openai.com/backend-api/conversation/{threadId}
+  Message contents are sent as the original markdown that the model generated.
+  Need to handle messages to plugins, e.g. dcedc3d0-9a7a-4a66-8623-754fb419da6a "Handling WM_COMMAND in WinAPI"
+
 * Create "Thread namer" assistant that operates in the background to update the name of a thread.
   Will run after first AI response then again after 10 responses and again after 100 (or something like that).
   It can probably be ran with the same thread ids that the main assistant uses, but only while main assistant is not running.
