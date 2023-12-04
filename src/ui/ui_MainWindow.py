@@ -18,7 +18,7 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
 from PySide6.QtWidgets import (QAbstractItemView, QApplication, QComboBox, QFrame,
     QGridLayout, QHBoxLayout, QListView, QMainWindow,
     QPlainTextEdit, QPushButton, QSizePolicy, QSpacerItem,
-    QTextEdit, QVBoxLayout, QWidget)
+    QTextBrowser, QVBoxLayout, QWidget)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -81,17 +81,6 @@ class Ui_MainWindow(object):
 
         self.gridLayout_2.addLayout(self.messageLayout, 2, 0, 1, 2)
 
-        self.chatArea = QTextEdit(self.mainFrame)
-        self.chatArea.setObjectName(u"chatArea")
-        sizePolicy1 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        sizePolicy1.setHorizontalStretch(0)
-        sizePolicy1.setVerticalStretch(1)
-        sizePolicy1.setHeightForWidth(self.chatArea.sizePolicy().hasHeightForWidth())
-        self.chatArea.setSizePolicy(sizePolicy1)
-        self.chatArea.setReadOnly(True)
-
-        self.gridLayout_2.addWidget(self.chatArea, 1, 0, 1, 2)
-
         self.topBar = QFrame(self.mainFrame)
         self.topBar.setObjectName(u"topBar")
         self.topBar.setFrameShape(QFrame.StyledPanel)
@@ -109,6 +98,18 @@ class Ui_MainWindow(object):
 
 
         self.gridLayout_2.addWidget(self.topBar, 0, 0, 1, 2)
+
+        self.messageList = QTextBrowser(self.mainFrame)
+        self.messageList.setObjectName(u"messageList")
+        sizePolicy1 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        sizePolicy1.setHorizontalStretch(0)
+        sizePolicy1.setVerticalStretch(1)
+        sizePolicy1.setHeightForWidth(self.messageList.sizePolicy().hasHeightForWidth())
+        self.messageList.setSizePolicy(sizePolicy1)
+        self.messageList.setAcceptDrops(False)
+        self.messageList.setReadOnly(True)
+
+        self.gridLayout_2.addWidget(self.messageList, 1, 0, 1, 2)
 
 
         self.horizontalLayout.addWidget(self.mainFrame)

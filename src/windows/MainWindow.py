@@ -1,9 +1,14 @@
 from PySide6.QtCore import Qt, QModelIndex
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QMainWindow, QMenu
+from markdown2 import markdown
+from pygments import highlight
+from pygments.lexers import get_lexer_by_name
+from pygments.formatters import html
 
 from core.GPTClient import GPTClient
 from ui.ChatThreadList import ChatThreadListModel, ChatThreadItemDelegate
+from ui.MessageList import MessageListModel, MessageItemDelegate
 from ui.ui_MainWindow import Ui_MainWindow
 from utils import logger
 
@@ -31,13 +36,15 @@ class MainWindow(QMainWindow):
 		self.ui.chatThreadsList.selectionModel().currentChanged.connect(self.chatThreadChanged)
 		self.chatThreadListModel.titleEdited.connect(self.handleTitleEditFinished)
 
+		# TODO: Different model for each thread? Maybe if it is too slow to switch between threads.
+		#self.messageListModel = MessageListModel()
+		#self.messageDelegate = MessageItemDelegate(self.ui.messageList)
+		#self.ui.messageList.setModel(self.messageListModel)
+		#self.ui.messageList.setItemDelegate(self.messageDelegate)
+
 		self.chatClient.chatThreadListLoaded.connect(self.chatThreadListLoaded)
-		self.chatClient.chatThreadAdded.connect(self.addChatThreadToList)
+		self.chatClient.chatThreadAdded.connect(self.chatThreadCreated)
 		self.chatClient.messageReceived.connect(self.appendMessage)
-
-
-	def addChatThreadToList(self, chatThread):
-		self.chatThreadListModel.addItem(chatThread)
 
 
 	def chatThreadListLoaded(self):
@@ -50,13 +57,19 @@ class MainWindow(QMainWindow):
 		self.chatClient.createNewChat('New Chat')
 
 
+	def chatThreadCreated(self, chatThread):
+		self.chatThreadListModel.addItem(chatThread)
+		self.selectChatThread(chatThread.id)
+
+
 	def chatThreadChanged(self, current: QModelIndex, previous: QModelIndex = None):
 		self.selectChatThread(current.data(Qt.UserRole))
 
 
 	def selectChatThread(self, chatThreadId):
 		self.currentChatThreadId = chatThreadId
-		self.ui.chatArea.clear()
+		#self.messageListModel.updateList(self.chatClient.getMessages(self.currentChatThreadId))
+		self.ui.messageList.clear()
 		messages = self.chatClient.getMessages(self.currentChatThreadId)
 		for message in messages:
 			self.appendMessage('[' + message.role + ']  ' + message.content[0].text.value)
@@ -108,5 +121,17 @@ class MainWindow(QMainWindow):
 		"""
 		Appends the given message text to the chat window
 		"""
-		#TODO: Accept object/dict that contains role ('user', 'AI')
-		self.ui.chatArea.append('\n===================================================\n' + messageText)
+		# TODO: Accept object/dict that contains role ('user', 'AI')
+		# TODO: Insert at the end, not where cursor is. self.ui.messageList.moveCursor()
+		# TODO: Show text selection 'I' cursor.
+		messageHtml = markdown(messageText, extras = ['fenced-code-blocks'])
+		self.ui.messageList.insertHtml('<br /><b>===================================================</b><br />' + messageHtml)
+
+
+# TODO: Not sure if needed, or how to use
+def highlightCode(match):
+	""" Function to highlight code blocks using Pygments """
+	lang, code = match.groups()
+	lexer = get_lexer_by_name(lang, stripall=True)
+	formatter = html.HtmlFormatter()
+	return highlight(code, lexer, formatter)
