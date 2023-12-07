@@ -1,0 +1,114 @@
+
+/*** Basic styles ***/
+
+body {
+	font-family: "Segoe UI";
+	font-size: 16px;
+	background: hsl(60, 25%, 98%);
+}
+
+p, li {
+	white-space: pre-wrap;
+}
+
+hr {
+	height: 1px;
+	border-width: 0;
+}
+
+li.unchecked::marker {
+	content: "\2610";
+}
+li.checked::marker {
+	content: "\2612";
+}
+
+
+/*** Syntax highlighting ***/
+
+.codehilite,
+.codehilite .hll {
+	background: hsl(60, 15%, 95%);
+}
+.codehilite .k,  /* Keyword */
+.codehilite .kc, /* Keyword.Constant */
+.codehilite .kd, /* Keyword.Declaration */
+.codehilite .kn, /* Keyword.Namespace */
+.codehilite .kp, /* Keyword.Pseudo */
+.codehilite .kr, /* Keyword.Reserved */
+.codehilite .kt  /* Keyword.Type */ {
+	color: hsl(240, 100%, 50%);
+}
+
+.codehilite .c,   /* Comment */
+.codehilite .ch,  /* Comment.Hashbang */
+.codehilite .cm,  /* Comment.Multiline */
+.codehilite .cp,  /* Comment.Preproc */
+.codehilite .cpf, /* Comment.PreprocFile */
+.codehilite .c1,  /* Comment.Single */
+.codehilite .cs,  /* Comment.Special */ {
+	color: hsl(120, 100%, 25%);
+}
+
+.codehilite .s  /* Literal.String */ {
+	color: hsl(0, 100%, 25%);
+}
+
+.codehilite .err { /* Error */
+	border: 1px solid red;
+}
+.codehilite .ge { font-style: italic; } /* Generic.Emph */
+.codehilite .gs { font-weight: bold; }  /* Generic.Strong */
+
+
+/* Other available syntax highlighting classes:
+.o    Operator
+.m    Literal.Number
+.na   Name.Attribute
+.nb   Name.Builtin
+.nc   Name.Class
+.no   Name.Constant
+.nd   Name.Decorator
+.ni   Name.Entity
+.ne   Name.Exception
+.nf   Name.Function
+.nl   Name.Label
+.nn   Name.Namespace
+.nt   Name.Tag
+.nv   Name.Variable
+.ow   Operator.Word
+.w    Text.Whitespace
+.mb   Literal.Number.Bin
+.mf   Literal.Number.Float
+.mh   Literal.Number.Hex
+.mi   Literal.Number.Integer
+.mo   Literal.Number.Oct
+.sa   Literal.String.Affix
+.sb   Literal.String.Backtick
+.sc   Literal.String.Char
+.dl   Literal.String.Delimiter
+.sd   Literal.String.Doc
+.s2   Literal.String.Double
+.se   Literal.String.Escape
+.sh   Literal.String.Heredoc
+.si   Literal.String.Interpol
+.sx   Literal.String.Other
+.sr   Literal.String.Regex
+.s1   Literal.String.Single
+.ss   Literal.String.Symbol
+.bp   Name.Builtin.Pseudo
+.fm   Name.Function.Magic
+.vc   Name.Variable.Class
+.vg   Name.Variable.Global
+.vi   Name.Variable.Instance
+.vm   Name.Variable.Magic
+.il   Literal.Number.Integer.Long
+.gd   Generic.Deleted
+.gr   Generic.Error
+.gh   Generic.Heading
+.gi   Generic.Inserted
+.go   Generic.Output
+.gp   Generic.Prompt
+.gu   Generic.Subheading
+.gt   Generic.Traceback
+*/

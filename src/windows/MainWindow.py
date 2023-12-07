@@ -1,5 +1,5 @@
 from PySide6.QtCore import Qt, QModelIndex
-from PySide6.QtGui import QAction
+from PySide6.QtGui import QAction, QTextDocument, QTextCursor
 from PySide6.QtWidgets import QMainWindow, QMenu
 from markdown2 import markdown
 from pygments import highlight
@@ -8,7 +8,6 @@ from pygments.formatters import html
 
 from core.GPTClient import GPTClient
 from ui.ChatThreadList import ChatThreadListModel, ChatThreadItemDelegate
-from ui.MessageList import MessageListModel, MessageItemDelegate
 from ui.ui_MainWindow import Ui_MainWindow
 from utils import logger
 
@@ -24,8 +23,20 @@ class MainWindow(QMainWindow):
 		self.ui = Ui_MainWindow()
 		self.ui.setupUi(self)
 
-		with open('src\\ui\\MainWindow.css', 'r', encoding='utf-8') as file:
+		with open('styles\\MainWindow.css', 'r', encoding='utf-8') as file:
 			self.setStyleSheet(file.read())
+
+		self.messagesDocument = QTextDocument()
+		with open('styles\\messages.css', 'r', encoding='utf-8') as file:
+			self.messagesDocument.setDefaultStyleSheet(file.read())
+		self.messagesDocument.setHtml("""
+		<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd">
+		<html><head>
+		<meta name="qrichtext" content="1"/>
+		<meta charset="utf-8"/>
+		</head><body</body></html>
+		""")
+		self.ui.messageList.setDocument(self.messagesDocument)
 
 		self.chatThreadListModel = ChatThreadListModel()
 		self.chatThreadDelegate = ChatThreadItemDelegate(self.ui.chatThreadsList)
@@ -35,12 +46,6 @@ class MainWindow(QMainWindow):
 		self.ui.chatThreadsList.customContextMenuRequested.connect(self.showChatThreadMenu)
 		self.ui.chatThreadsList.selectionModel().currentChanged.connect(self.chatThreadChanged)
 		self.chatThreadListModel.titleEdited.connect(self.handleTitleEditFinished)
-
-		# TODO: Different model for each thread? Maybe if it is too slow to switch between threads.
-		#self.messageListModel = MessageListModel()
-		#self.messageDelegate = MessageItemDelegate(self.ui.messageList)
-		#self.ui.messageList.setModel(self.messageListModel)
-		#self.ui.messageList.setItemDelegate(self.messageDelegate)
 
 		self.chatClient.chatThreadListLoaded.connect(self.chatThreadListLoaded)
 		self.chatClient.chatThreadAdded.connect(self.chatThreadCreated)
@@ -68,7 +73,6 @@ class MainWindow(QMainWindow):
 
 	def selectChatThread(self, chatThreadId):
 		self.currentChatThreadId = chatThreadId
-		#self.messageListModel.updateList(self.chatClient.getMessages(self.currentChatThreadId))
 		self.ui.messageList.clear()
 		messages = self.chatClient.getMessages(self.currentChatThreadId)
 		for message in messages:
@@ -125,7 +129,9 @@ class MainWindow(QMainWindow):
 		# TODO: Insert at the end, not where cursor is. self.ui.messageList.moveCursor()
 		# TODO: Show text selection 'I' cursor.
 		messageHtml = markdown(messageText, extras = ['fenced-code-blocks'])
-		self.ui.messageList.insertHtml('<br /><b>===================================================</b><br />' + messageHtml)
+		cursor = QTextCursor(self.messagesDocument)
+		cursor.movePosition(QTextCursor.End, QTextCursor.MoveAnchor)
+		cursor.insertHtml('<div><b>===================================================</b><br />' + messageHtml + '</div>')
 
 
 # TODO: Not sure if needed, or how to use
