@@ -1,8 +1,10 @@
 import asyncio
+import logging
 import signal
 import sys
 from pathlib import Path
 
+from PySide6.QtCore import qInstallMessageHandler, QtMsgType
 from omegaconf import OmegaConf
 from PySide6.QtAsyncio import QAsyncioEventLoopPolicy
 from PySide6.QtWidgets import QApplication
@@ -18,9 +20,22 @@ defaultConf = {
 config = OmegaConf.merge(defaultConf, OmegaConf.load('config.yaml'))
 
 setupLogger(config)
+from utils import logger
+
+logLevelMapping = {
+	QtMsgType.QtCriticalMsg: logging.CRITICAL,
+	QtMsgType.QtFatalMsg:    logging.FATAL,
+	QtMsgType.QtWarningMsg:  logging.WARNING,
+	QtMsgType.QtInfoMsg:     logging.INFO,
+	QtMsgType.QtDebugMsg:    logging.DEBUG,
+}
+def customMessageHandler(msgType, context, message):
+	logger.log(logLevelMapping.get(msgType, logging.INFO), f"Qt: {message}")
+
+qInstallMessageHandler(customMessageHandler)
+
 
 # These need to be imported after the logger is initialized
-from utils import logger
 from core.Database import Database
 from core.GPTClient import GPTClient
 from windows.MainWindow import MainWindow
