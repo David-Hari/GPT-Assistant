@@ -1,10 +1,9 @@
+import html
+
 from PySide6.QtCore import Qt, QModelIndex
-from PySide6.QtGui import QAction, QTextDocument, QTextCursor
+from PySide6.QtGui import QAction, QTextCursor
 from PySide6.QtWidgets import QMainWindow, QMenu
 from markdown2 import markdown
-from pygments import highlight
-from pygments.lexers import get_lexer_by_name
-from pygments.formatters import html
 
 from core.GPTClient import GPTClient
 from ui.ChatThreadList import ChatThreadListModel, ChatThreadItemDelegate
@@ -26,17 +25,16 @@ class MainWindow(QMainWindow):
 		with open('styles\\MainWindow.css', 'r', encoding='utf-8') as file:
 			self.setStyleSheet(file.read())
 
-		self.messagesDocument = QTextDocument()
+		self.blankHtml = """
+			<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd">
+			<html><head>
+			<meta charset="utf-8"/>
+			<style type="text/css">
+		"""
 		with open('styles\\messages.css', 'r', encoding='utf-8') as file:
-			self.messagesDocument.setDefaultStyleSheet(file.read())
-		self.messagesDocument.setHtml("""
-		<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd">
-		<html><head>
-		<meta name="qrichtext" content="1"/>
-		<meta charset="utf-8"/>
-		</head><body</body></html>
-		""")
-		self.ui.messageList.setDocument(self.messagesDocument)
+			self.blankHtml += file.read()
+		self.blankHtml += '</style></head><body><div id="messageList"></div></body></html>'
+		self.ui.messageView.setHtml(self.blankHtml)
 
 		self.chatThreadListModel = ChatThreadListModel()
 		self.chatThreadDelegate = ChatThreadItemDelegate(self.ui.chatThreadsList)
@@ -73,7 +71,7 @@ class MainWindow(QMainWindow):
 
 	def selectChatThread(self, chatThreadId):
 		self.currentChatThreadId = chatThreadId
-		self.ui.messageList.clear()
+		self.ui.messageView.clear()
 		messages = self.chatClient.getMessages(self.currentChatThreadId)
 		for message in messages:
 			self.appendMessage('[' + message.role + ']  ' + message.content[0].text.value)
@@ -126,18 +124,7 @@ class MainWindow(QMainWindow):
 		Appends the given message text to the chat window
 		"""
 		# TODO: Accept object/dict that contains role ('user', 'AI')
-		# TODO: Insert at the end, not where cursor is. self.ui.messageList.moveCursor()
-		# TODO: Show text selection 'I' cursor.
+		# TODO: Need to html.escape(messageText) if it's going into a HTML view, but not for QTextBrowser
 		messageHtml = markdown(messageText, extras = ['fenced-code-blocks'])
-		cursor = QTextCursor(self.messagesDocument)
-		cursor.movePosition(QTextCursor.End, QTextCursor.MoveAnchor)
-		cursor.insertHtml('<div><b>===================================================</b><br />' + messageHtml + '</div>')
-
-
-# TODO: Not sure if needed, or how to use
-def highlightCode(match):
-	""" Function to highlight code blocks using Pygments """
-	lang, code = match.groups()
-	lexer = get_lexer_by_name(lang, stripall=True)
-	formatter = html.HtmlFormatter()
-	return highlight(code, lexer, formatter)
+		self.ui.messageView.textCursor().movePosition(QTextCursor.End, QTextCursor.MoveAnchor)
+		self.ui.messageView.insertHtml('<br /><div class="message"><p>===================================================</p>' + messageHtml + '</div>')

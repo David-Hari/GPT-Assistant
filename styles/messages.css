@@ -23,6 +23,13 @@ li.checked::marker {
 	content: "\2612";
 }
 
+/*** Message formatting ***/
+
+.messageList {
+	padding: 2em;
+	background: hsl(60, 25%, 98%);
+}
+
 
 /*** Syntax highlighting ***/
 
