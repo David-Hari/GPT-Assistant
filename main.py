@@ -29,10 +29,7 @@ logLevelMapping = {
 	QtMsgType.QtInfoMsg:     logging.INFO,
 	QtMsgType.QtDebugMsg:    logging.DEBUG,
 }
-def customMessageHandler(msgType, context, message):
-	logger.log(logLevelMapping.get(msgType, logging.INFO), f"Qt: {message}")
-
-qInstallMessageHandler(customMessageHandler)
+qInstallMessageHandler(lambda msgType, context, message: logger.log(logLevelMapping.get(msgType, logging.INFO), f"Qt: {message}"))
 
 
 # These need to be imported after the logger is initialized
