@@ -5,9 +5,10 @@ import sys
 from pathlib import Path
 
 from PySide6.QtCore import qInstallMessageHandler, QtMsgType
+from PySide6.QtGui import QGuiApplication
+from PySide6.QtQml import QQmlApplicationEngine
 from omegaconf import OmegaConf
 from PySide6.QtAsyncio import QAsyncioEventLoopPolicy
-from PySide6.QtWidgets import QApplication
 from openai import OpenAI
 
 from utils import setupLogger
@@ -29,20 +30,17 @@ logLevelMapping = {
 	QtMsgType.QtInfoMsg:     logging.INFO,
 	QtMsgType.QtDebugMsg:    logging.DEBUG,
 }
-def customMessageHandler(msgType, context, message):
-	logger.log(logLevelMapping.get(msgType, logging.INFO), f"Qt: {message}")
-
-qInstallMessageHandler(customMessageHandler)
+qInstallMessageHandler(lambda msgType, context, message: logger.log(logLevelMapping.get(msgType, logging.INFO), f"Qt: {message}"))
 
 
 # These need to be imported after the logger is initialized
 from core.Database import Database
 from core.GPTClient import GPTClient
-from windows.MainWindow import MainWindow
 
 
 logger.debug('Starting application')
-app = QApplication(sys.argv)
+app = QGuiApplication(sys.argv)
+engine = QQmlApplicationEngine()
 
 dbPath = Path("data/chats.db")
 database = Database(dbPath, not dbPath.exists())
@@ -51,8 +49,9 @@ database = Database(dbPath, not dbPath.exists())
 chatClient = GPTClient(OpenAI(), config.model, database)
 
 logger.debug('Opening window')
-window = MainWindow(chatClient)
-window.show()
+engine.load("src\\ui\\MainWindow.qml")
+if not engine.rootObjects():
+	raise Exception("Unable to load main window")
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
