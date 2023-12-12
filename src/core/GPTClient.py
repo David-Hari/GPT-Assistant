@@ -13,8 +13,8 @@ from utils import logger
 
 class GPTClient(QObject):
 	chatThreadListLoaded = Signal()
-	chatThreadAdded = Signal(object)
-	messageReceived = Signal(str)
+	chatThreadAdded = Signal(ChatThread)
+	messageAdded = Signal(ChatMessage)
 
 
 	# TODO: api: AsyncOpenAI
@@ -143,13 +143,14 @@ class GPTClient(QObject):
 		Sends a user message to the server.
 		:param chatThreadId: The ID of the chat thread with which this message is associated.
 		:param messageText: Message text to send
-		:emits: messageReceived
+		:emits: messageAdded
 		"""
 		logger.debug(f'Sending message for {chatThreadId}')
 		chatThread = self.chatThreads[chatThreadId]
 
 		userMessage = ChatMessage.fromAPIObject(self.api.beta.threads.messages.create(chatThreadId, role = 'user', content = messageText))
 		self.addNewMessage(chatThread, userMessage)
+		self.messageAdded.emit(userMessage)
 
 		run = self.api.beta.threads.runs.create(
 			thread_id = chatThreadId,
@@ -163,7 +164,7 @@ class GPTClient(QObject):
 			)
 		responseMessage = ChatMessage.fromAPIObject(self.api.beta.threads.messages.list(chatThreadId).data[0])
 		self.addNewMessage(chatThread, responseMessage)
-		self.messageReceived.emit(responseMessage.content[0].text.value)
+		self.messageAdded.emit(responseMessage)
 
 
 	def addNewMessage(self, chatThread: ChatThread, message: ChatMessage):

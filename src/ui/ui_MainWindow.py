@@ -15,10 +15,11 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
+from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWidgets import (QAbstractItemView, QApplication, QComboBox, QFrame,
     QGridLayout, QHBoxLayout, QListView, QMainWindow,
     QPlainTextEdit, QPushButton, QSizePolicy, QSpacerItem,
-    QTextBrowser, QVBoxLayout, QWidget)
+    QVBoxLayout, QWidget)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -51,6 +52,7 @@ class Ui_MainWindow(object):
 
         self.chatThreadsList = QListView(self.sidebar)
         self.chatThreadsList.setObjectName(u"chatThreadsList")
+        self.chatThreadsList.setContextMenuPolicy(Qt.CustomContextMenu)
         self.chatThreadsList.setEditTriggers(QAbstractItemView.EditKeyPressed)
         self.chatThreadsList.setUniformItemSizes(True)
 
@@ -100,15 +102,14 @@ class Ui_MainWindow(object):
 
         self.gridLayout_2.addWidget(self.topBar, 0, 0, 1, 2)
 
-        self.messageView = QTextBrowser(self.mainFrame)
+        self.messageView = QWebEngineView(self.mainFrame)
         self.messageView.setObjectName(u"messageView")
-        sizePolicy1 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        sizePolicy1 = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         sizePolicy1.setHorizontalStretch(0)
         sizePolicy1.setVerticalStretch(1)
         sizePolicy1.setHeightForWidth(self.messageView.sizePolicy().hasHeightForWidth())
         self.messageView.setSizePolicy(sizePolicy1)
         self.messageView.setAcceptDrops(False)
-        self.messageView.setReadOnly(True)
 
         self.gridLayout_2.addWidget(self.messageView, 1, 0, 1, 2)
 

@@ -72,6 +72,9 @@
        </item>
        <item>
         <widget class="QListView" name="chatThreadsList">
+         <property name="contextMenuPolicy">
+          <enum>Qt::CustomContextMenu</enum>
+         </property>
          <property name="editTriggers">
           <set>QAbstractItemView::EditKeyPressed</set>
          </property>
@@ -150,18 +153,15 @@
         </widget>
        </item>
        <item row="1" column="0" colspan="2">
-        <widget class="QTextBrowser" name="messageView">
+        <widget class="QWebEngineView" name="messageView">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
            <horstretch>0</horstretch>
            <verstretch>1</verstretch>
           </sizepolicy>
          </property>
          <property name="acceptDrops">
           <bool>false</bool>
-         </property>
-         <property name="readOnly">
-          <bool>true</bool>
          </property>
         </widget>
        </item>
@@ -171,6 +171,13 @@
    </layout>
   </widget>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QWebEngineView</class>
+   <extends>QWidget</extends>
+   <header location="global">QtWebEngineWidgets/QWebEngineView</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections>
   <connection>

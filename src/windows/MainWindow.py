@@ -1,12 +1,11 @@
-import html
-
 from PySide6.QtCore import Qt, QModelIndex
 from PySide6.QtGui import QAction, QTextCursor
 from PySide6.QtWidgets import QMainWindow, QMenu
-from markdown2 import markdown
 
 from core.GPTClient import GPTClient
+from data.ChatThread import ChatThread
 from ui.ChatThreadList import ChatThreadListModel, ChatThreadItemDelegate
+from ui.HtmlMessageView import HtmlMessageView
 from ui.ui_MainWindow import Ui_MainWindow
 from utils import logger
 
@@ -25,29 +24,20 @@ class MainWindow(QMainWindow):
 		with open('styles\\MainWindow.css', 'r', encoding='utf-8') as file:
 			self.setStyleSheet(file.read())
 
-		self.blankHtml = """
-			<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd">
-			<html><head>
-			<meta charset="utf-8"/>
-			<style type="text/css">
-		"""
-		with open('styles\\messages.css', 'r', encoding='utf-8') as file:
-			self.blankHtml += file.read()
-		self.blankHtml += '</style></head><body><div id="messageList"></div></body></html>'
-		self.ui.messageView.setHtml(self.blankHtml)
-
+		self.messageView = HtmlMessageView(self.ui.messageView)
 		self.chatThreadListModel = ChatThreadListModel()
 		self.chatThreadDelegate = ChatThreadItemDelegate(self.ui.chatThreadsList)
 		self.ui.chatThreadsList.setModel(self.chatThreadListModel)
 		self.ui.chatThreadsList.setItemDelegate(self.chatThreadDelegate)
-		self.ui.chatThreadsList.setContextMenuPolicy(Qt.CustomContextMenu)
 		self.ui.chatThreadsList.customContextMenuRequested.connect(self.showChatThreadMenu)
 		self.ui.chatThreadsList.selectionModel().currentChanged.connect(self.chatThreadChanged)
 		self.chatThreadListModel.titleEdited.connect(self.handleTitleEditFinished)
 
 		self.chatClient.chatThreadListLoaded.connect(self.chatThreadListLoaded)
 		self.chatClient.chatThreadAdded.connect(self.chatThreadCreated)
-		self.chatClient.messageReceived.connect(self.appendMessage)
+		self.chatClient.messageAdded.connect(self.messageView.appendMessage)
+
+		self.messageView.clear()
 
 
 	def chatThreadListLoaded(self):
@@ -60,7 +50,7 @@ class MainWindow(QMainWindow):
 		self.chatClient.createNewChat('New Chat')
 
 
-	def chatThreadCreated(self, chatThread):
+	def chatThreadCreated(self, chatThread: ChatThread):
 		self.chatThreadListModel.addItem(chatThread)
 		self.selectChatThread(chatThread.id)
 
@@ -71,10 +61,7 @@ class MainWindow(QMainWindow):
 
 	def selectChatThread(self, chatThreadId):
 		self.currentChatThreadId = chatThreadId
-		self.ui.messageView.clear()
-		messages = self.chatClient.getMessages(self.currentChatThreadId)
-		for message in messages:
-			self.appendMessage('[' + message.role + ']  ' + message.content[0].text.value)
+		self.messageView.setMessages(self.chatClient.getMessages(self.currentChatThreadId))
 
 
 	def editChatThreadTitle(self, index: QModelIndex):
@@ -112,19 +99,7 @@ class MainWindow(QMainWindow):
 
 
 	def sendMessage(self):
-		message = self.ui.messageTextBox.document().toPlainText()
-		if message != '':
-			self.appendMessage('You: ' + message)
-			self.chatClient.sendMessage(self.currentChatThreadId, message)
+		messageText = self.ui.messageTextBox.document().toPlainText()
+		if messageText != '':
+			self.chatClient.sendMessage(self.currentChatThreadId, messageText)
 			self.ui.messageTextBox.clear()
-
-
-	def appendMessage(self, messageText):
-		"""
-		Appends the given message text to the chat window
-		"""
-		# TODO: Accept object/dict that contains role ('user', 'AI')
-		# TODO: Need to html.escape(messageText) if it's going into a HTML view, but not for QTextBrowser
-		messageHtml = markdown(messageText, extras = ['fenced-code-blocks'])
-		self.ui.messageView.textCursor().movePosition(QTextCursor.End, QTextCursor.MoveAnchor)
-		self.ui.messageView.insertHtml('<br /><div class="message"><p>===================================================</p>' + messageHtml + '</div>')

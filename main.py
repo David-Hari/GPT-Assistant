@@ -40,6 +40,7 @@ from windows.MainWindow import MainWindow
 
 logger.debug('Starting application')
 app = QApplication(sys.argv)
+app.setApplicationName('AI Assistant')
 
 dbPath = Path("data/chats.db")
 database = Database(dbPath, not dbPath.exists())
