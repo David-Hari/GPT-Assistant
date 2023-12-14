@@ -25,7 +25,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(1000, 1000)
+        MainWindow.resize(1500, 1200)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.horizontalLayout = QHBoxLayout(self.centralwidget)
@@ -39,7 +39,7 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.sidebar.sizePolicy().hasHeightForWidth())
         self.sidebar.setSizePolicy(sizePolicy)
-        self.sidebar.setMaximumSize(QSize(250, 16777215))
+        self.sidebar.setMaximumSize(QSize(300, 16777215))
         self.sidebar.setFrameShape(QFrame.StyledPanel)
         self.sidebar.setFrameShadow(QFrame.Raised)
         self.verticalLayout_3 = QVBoxLayout(self.sidebar)
