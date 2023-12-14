@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8"/>
+	<title>Chat</title>
+	<script type="text/javascript" src="qrc:///qtwebchannel/qwebchannel.js"></script>
+	<script type="text/javascript">
+		function appendHtml(htmlString) {
+			document.getElementById("messageList").innerHTML += htmlString;
+		}
+	</script>
+	<style>
+		{{styles}}
+	</style>
+</head>
+<body>
+	<div id="messageList">
+		{{messages}}
+	</div>
+</body>
+</html>

@@ -30,6 +30,13 @@ li.checked::marker {
 	background: hsl(60, 25%, 98%);
 }
 
+.message.user {
+}
+
+.message.assistant {
+	background: hsl(210 50% 95%);
+}
+
 
 /*** Syntax highlighting ***/
 

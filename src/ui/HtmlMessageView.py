@@ -1,7 +1,6 @@
-from PySide6.QtWidgets import QApplication
 from markdown2 import markdown
-from PySide6.QtWebEngineCore import QWebEngineProfile, QWebEnginePage, QWebEngineScript
 from PySide6.QtWebEngineWidgets import QWebEngineView
+from PySide6.QtWebChannel import QWebChannel
 
 from data.ChatMessage import ChatMessage
 
@@ -11,45 +10,41 @@ class HtmlMessageView:
 	def __init__(self, view: QWebEngineView):
 		self.view = view
 
-		self.startHtml = """
-			<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd">
-			<html><head>
-			<meta charset="utf-8"/>
-			<style type="text/css">
-		"""
+		with open('src\\templates\\page.html', 'r', encoding='utf-8') as file:
+			self.pageHtml = file.read()
 		with open('styles\\messages.css', 'r', encoding='utf-8') as file:
-			self.startHtml += file.read()
-		self.startHtml += '</style></head><body><div id="messageList">'
-		self.endHtml = '</div></body></html>'
+			self.pageHtml = self.pageHtml.replace('{{styles}}', file.read())
+		with open('src\\templates\\message.html', 'r', encoding='utf-8') as file:
+			self.messageHtml = file.read()
 
-		scriptSource = """
-		function appendMessage(message) {
-			document.getElementById("messageList").innerHTML += \'<div class="message">\' + message + \'</div>\';
-		}
-		"""
-		appendMessageScript = QWebEngineScript()
-		appendMessageScript.setName("appendMessage")
-		appendMessageScript.setSourceCode(scriptSource)
-		appendMessageScript.setWorldId(QWebEngineScript.MainWorld)
-
-		profile = QWebEngineProfile(QApplication.applicationName())
-		profile.scripts().insert(appendMessageScript)
-		self.view.setPage(QWebEnginePage(profile))
+		#channel = QWebChannel()
+		#channel.registerObject('messageHandler', self.message_handler)
+		# OR
+		#channel.connectTo(transport), where I implement a subclass of QWebChannelAbstractTransport
+		#self.view.page().setWebChannel(channel)
 
 
 	def clear(self):
-		self.view.setHtml(self.startHtml + self.endHtml)
+		html = self.pageHtml.replace('{{messages}}', '')
+		self.view.setHtml(html)
 
 
 	def setMessages(self, messages: list[ChatMessage]):
-		htmlStr = self.startHtml
+		messagesHtml = ''
 		for message in messages:
-			messageHtml = markdown(message.content[0].text.value, extras = ['fenced-code-blocks'])
-			htmlStr += '<div class="message"><p>===================================================</p>' + messageHtml + '</div>'
-		htmlStr += self.endHtml
-		self.view.setHtml(htmlStr)
+			messagesHtml += self.renderHtmlForMessage(message)
+		html = self.pageHtml.replace('{{messages}}', messagesHtml)
+		self.view.setHtml(html)
 
 
 	def appendMessage(self, message: ChatMessage):
-		# TODO: json.dumps(message.toDictionary()), but need to handle datetime
-		self.view.page().runJavaScript('appendMessage(\'test\')')
+		htmlStr = self.renderHtmlForMessage(message)
+		self.view.page().runJavaScript('document.getElementById("messageList").innerHTML += ' + htmlStr)
+
+
+	def renderHtmlForMessage(self, message: ChatMessage):
+		messageHtml = markdown(message.content[0].text.value, extras = ['fenced-code-blocks'])
+		html = self.messageHtml.replace('{{roleClass}}', message.role)
+		# TODO: Replace datetime
+		html = html.replace('{{contents}}', messageHtml)
+		return html
