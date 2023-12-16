@@ -24,8 +24,6 @@
 
 * Allow AI to store data in its own database - "knowledge.db"
 
-* Show date/time on the left side of each message.
-
 * Drop-down for model list, initially populated from config but full list fetched when clicked.
   Filter to only models that can be used with assistants API.
 
