@@ -2,6 +2,7 @@
 /*** Basic styles ***/
 
 body {
+	margin: 0;
 	font-family: "Segoe UI";
 	font-size: 16px;
 	background: hsl(60, 25%, 98%);
@@ -25,16 +26,34 @@ li.checked::marker {
 
 /*** Message formatting ***/
 
-.messageList {
-	padding: 2em;
-	background: hsl(60, 25%, 98%);
+#messageList {
+	display: flex;
+	flex-direction: column;
 }
 
-.message.user {
+.message {
+	display: flex;
 }
 
 .message.assistant {
 	background: hsl(210 50% 95%);
+}
+
+.message .timestamp {
+	width: 150px;
+	min-width: 150px;
+	max-width: 150px;
+	margin: 1em;
+}
+
+.message .timestamp p {
+	margin: 0.2em 0;
+}
+
+.message .content {
+	flex: 1;
+	margin: 1em;
+	margin-right: 5em;
 }
 
 

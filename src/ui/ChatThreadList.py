@@ -30,7 +30,7 @@ class ChatThreadListModel(QAbstractListModel):
 		if role == Qt.DisplayRole or role == Qt.EditRole:
 			return chatThread.title
 		if role == Qt.ToolTipRole:
-			return 'Created: ' + chatThread.createdTimestamp.strftime("%Y-%m-%d %H:%M:%S")
+			return 'Created: ' + chatThread.createdTimestamp.strftime('%Y-%m-%d %H:%M:%S')
 		return None
 
 

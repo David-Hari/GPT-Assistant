@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from markdown2 import markdown
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWebChannel import QWebChannel
@@ -43,8 +45,23 @@ class HtmlMessageView:
 
 
 	def renderHtmlForMessage(self, message: ChatMessage):
+		localNow = datetime.now().astimezone()
+		localMessageTime = message.createdTimestamp.astimezone()
 		messageHtml = markdown(message.content[0].text.value, extras = ['fenced-code-blocks'])
 		html = self.messageHtml.replace('{{roleClass}}', message.role)
-		# TODO: Replace datetime
-		html = html.replace('{{contents}}', messageHtml)
+		html = html.replace('{{timestamp}}', self.formatDateTime(localNow, localMessageTime))
+		html = html.replace('{{content}}', messageHtml)
 		return html
+
+
+	@staticmethod
+	def formatDateTime(current, other):
+		timeStr = '<p>%H:%M:%S</p>'
+		if other.date() == current.date():   # Today
+			return other.strftime(timeStr)
+		elif (current - other).days < 7:     # Within a week
+			return other.strftime('<p>%A</p>' + timeStr)
+		elif other.year == current.year and other.month == current.month:  # This month
+			return other.strftime('<p>%e %b</p>' + timeStr)
+		else:
+			return other.strftime('<p>%Y-%m-%d</p>' + timeStr)
