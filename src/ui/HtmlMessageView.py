@@ -17,7 +17,7 @@ class WebPageBridge(QObject):
 		super().__init__(parent)
 		self.htmlString = None
 
-	def appendHtml(self, htmlString):
+	def setHtml(self, htmlString):
 		self.htmlString = htmlString
 
 
@@ -54,8 +54,8 @@ class HtmlMessageView:
 
 
 	def appendMessage(self, message: ChatMessage):
-		htmlStr = self.renderHtmlForMessage(message)
-		self.view.page().runJavaScript('document.getElementById("messageList").innerHTML += ' + htmlStr)
+		htmlStr = self.renderHtmlForMessage(message).replace('\'', '\\\'')
+		self.view.page().runJavaScript('document.getElementById("messageList").innerHTML += \'' + htmlStr + '\'')
 
 
 	def renderHtmlForMessage(self, message: ChatMessage):
