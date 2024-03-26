@@ -156,15 +156,18 @@ class GPTClient(QObject):
 			thread_id = chatThreadId,
 			assistant_id = self.mainAssistant.id
 		)
-		while run.status != 'completed':
+		while run.status != 'completed' and run.status != 'failed':
 			time.sleep(1)
 			run = self.api.beta.threads.runs.retrieve(
 				thread_id = chatThreadId,
 				run_id = run.id
 			)
-		responseMessage = ChatMessage.fromAPIObject(self.api.beta.threads.messages.list(chatThreadId).data[0])
-		self.addNewMessage(chatThread, responseMessage)
-		self.messageAdded.emit(responseMessage)
+		if run.status == 'failed':
+			logger.error('Failed to retrieve chat response. ' + run.last_error.message)
+		else:
+			responseMessage = ChatMessage.fromAPIObject(self.api.beta.threads.messages.list(chatThreadId).data[0])
+			self.addNewMessage(chatThread, responseMessage)
+			self.messageAdded.emit(responseMessage)
 
 
 	def addNewMessage(self, chatThread: ChatThread, message: ChatMessage):
