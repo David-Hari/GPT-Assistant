@@ -1,4 +1,10 @@
 
+* Maybe use QListView(QAbstractItemView)::setIndexWidget and give it a widget that contains text panes.
+  Render markdown to Qt text pane. For code, insert a separate text pane using the following:
+  https://doc.qt.io/qtforpython-6.5/examples/example_widgets_richtext_syntaxhighlighter.html
+
+
+
 * Store window position and other settings using Qt settings
 
 * Import threads from ChatGPT.
@@ -24,7 +30,7 @@
 
 * Allow AI to store data in its own database - "knowledge.db"
 
-* Drop-down for model list, initially populated from config but full list fetched when clicked.
+* Drop-down for AI model list, initially populated from config but full list fetched when clicked.
   Filter to only models that can be used with assistants API.
 
 * Collapsable panel to the right that shows all files uploaded. Can add by dropping files. Can remove and update existing
