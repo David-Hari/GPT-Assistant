@@ -1,5 +1,13 @@
 
-* Fix quotation marks showing with slash e.g. it\'s.
+
+* Make "AssistantInterface" which GPTAssistant inherits from,
+  then make a test one which just echoes the user message or something. Then have the ability
+  to choose them from drop down. Map from name to class.
+  Test one only available if an environment variable is set, which I can set in IntelliJ run environment.
+
+* Drop-down for AI model list, initially populated from config but full list fetched when clicked.
+  Filter to only models that can be used with assistants API.
+
 
 * Scroll to bottom when thread is selected and new message is added.
 
@@ -28,9 +36,7 @@
    - updateFile   # For a file that is given to the AI for use with the retrieval tool. Updating would write back to the API.
 
 * Allow AI to store data in its own database - "knowledge.db"
-
-* Drop-down for AI model list, initially populated from config but full list fetched when clicked.
-  Filter to only models that can be used with assistants API.
+  Look into Graph RAG.
 
 * Collapsable panel to the right that shows all files uploaded. Can add by dropping files. Can remove and update existing
   files. Maybe also watch for file change and automatically upload.

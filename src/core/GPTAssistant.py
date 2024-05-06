@@ -11,7 +11,7 @@ from utils import logger
 
 
 
-class GPTClient(QObject):
+class GPTAssistant(QObject):
 	chatThreadListLoaded = Signal()
 	chatThreadAdded = Signal(ChatThread)
 	messageAdded = Signal(ChatMessage)
@@ -43,8 +43,7 @@ class GPTClient(QObject):
 
 	def loadChatThreadList(self):
 		"""
-		Gets the list of chat threads stored in the local data directory,
-		retrieving information from the API if necessary.
+		Gets the list of chat threads stored in the local data directory.
 		"""
 		logger.debug(f'Loading chat threads')
 		for chatThread in self.database.getChatThreads():

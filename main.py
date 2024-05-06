@@ -34,7 +34,7 @@ qInstallMessageHandler(lambda msgType, context, message: logger.log(logLevelMapp
 
 # These need to be imported after the logger is initialized
 from core.Database import Database
-from core.GPTClient import GPTClient
+from core.GPTAssistant import GPTAssistant
 from windows.MainWindow import MainWindow
 
 
@@ -46,7 +46,7 @@ dbPath = Path("data/chats.db")
 database = Database(dbPath, not dbPath.exists())
 
 # TODO: AsyncOpenAI()
-chatClient = GPTClient(OpenAI(), config.model, database)
+chatClient = GPTAssistant(OpenAI(), config.model, database)
 
 logger.debug('Opening window')
 window = MainWindow(chatClient)

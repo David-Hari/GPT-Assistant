@@ -2,7 +2,7 @@ from PySide6.QtCore import Qt, QModelIndex
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QMainWindow, QMenu
 
-from core.GPTClient import GPTClient
+from core.GPTAssistant import GPTAssistant
 from data.ChatThread import ChatThread
 from ui.ChatThreadList import ChatThreadListModel, ChatThreadItemDelegate
 from ui.HtmlMessageView import HtmlMessageView
@@ -13,7 +13,7 @@ from utils import logger
 
 class MainWindow(QMainWindow):
 
-	def __init__(self, chatClient: GPTClient):
+	def __init__(self, chatClient: GPTAssistant):
 		super(MainWindow, self).__init__()
 		self.chatClient = chatClient
 		self.currentChatThreadId = None
