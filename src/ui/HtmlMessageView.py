@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional
 
 from markdown2 import markdown
-from PySide6.QtCore import QObject
+from PySide6.QtCore import QObject, Signal
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWebChannel import QWebChannel
 
@@ -13,17 +13,16 @@ class WebPageBridge(QObject):
 	"""
 	Simple class to facilitate sending HTML to the web page
 	"""
+	messageAdded = Signal(str)
+
 	def __init__(self, parent: Optional[QObject] = None):
 		super().__init__(parent)
-		self.htmlString = None
-
-	def setHtml(self, htmlString):
-		self.htmlString = htmlString
 
 
-class HtmlMessageView:
 
+class HtmlMessageView(QObject):
 	def __init__(self, view: QWebEngineView):
+		super().__init__()
 		self.view = view
 
 		with open('src\\templates\\page.html', 'r', encoding='utf-8') as file:
@@ -33,11 +32,10 @@ class HtmlMessageView:
 		with open('src\\templates\\message.html', 'r', encoding='utf-8') as file:
 			self.messageHtml = file.read()
 
-		self.bridge = WebPageBridge()
-		channel = QWebChannel()
-		channel.registerObject('bridge', self.bridge)
-		#channel.connectTo(transport), where I implement a subclass of QWebChannelAbstractTransport
-		#self.view.page().setWebChannel(channel)
+		self.bridge = WebPageBridge(self)
+		self.channel = QWebChannel(self)
+		self.view.page().setWebChannel(self.channel)
+		self.channel.registerObject('bridge', self.bridge)
 
 
 	def clear(self):
@@ -55,7 +53,7 @@ class HtmlMessageView:
 
 	def appendMessage(self, message: ChatMessage):
 		htmlStr = self.renderHtmlForMessage(message).replace('\'', '\\\'')
-		self.view.page().runJavaScript('document.getElementById("messageList").innerHTML += \'' + htmlStr + '\'')
+		self.bridge.messageAdded.emit(htmlStr)
 
 
 	def renderHtmlForMessage(self, message: ChatMessage):

@@ -1,8 +1,7 @@
 
-* Maybe use QListView(QAbstractItemView)::setIndexWidget and give it a widget that contains text panes.
-  Render markdown to Qt text pane. For code, insert a separate text pane using the following:
-  https://doc.qt.io/qtforpython-6.5/examples/example_widgets_richtext_syntaxhighlighter.html
+* Fix quotation marks showing with slash e.g. it\'s.
 
+* Scroll to bottom when thread is selected and new message is added.
 
 
 * Store window position and other settings using Qt settings
@@ -38,3 +37,10 @@
 
 * Info button that when pressed shows a tool-tip with number of tokens used and cost.
   (Doesn't seem to be currently possible to get that information from the API)
+
+
+
+
+* Maybe use QListView(QAbstractItemView)::setIndexWidget and give it a widget that contains text panes.
+  Render markdown to Qt text pane. For code, insert a separate text pane using the following:
+  https://doc.qt.io/qtforpython-6.5/examples/example_widgets_richtext_syntaxhighlighter.html

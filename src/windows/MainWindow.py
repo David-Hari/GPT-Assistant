@@ -1,5 +1,5 @@
 from PySide6.QtCore import Qt, QModelIndex
-from PySide6.QtGui import QAction, QTextCursor
+from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QMainWindow, QMenu
 
 from core.GPTClient import GPTClient

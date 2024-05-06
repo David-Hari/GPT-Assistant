@@ -5,11 +5,15 @@
 	<title>Chat</title>
 	<script type="text/javascript" src="qrc:///qtwebchannel/qwebchannel.js"></script>
 	<script type="text/javascript">
-		//new QWebChannel(qt.webChannelTransport, function(channel) {
-		//	window.bridge = channel.objects.bridge;
-		//});
-		function appendHtml() {
-			document.getElementById("messageList").innerHTML += window.bridge.htmlString;
+		window.onload = function () {
+			new QWebChannel(qt.webChannelTransport, function (channel) {
+				channel.objects.bridge.messageAdded.connect(function(htmlString) {
+					appendHtml(htmlString);
+				});
+			});
+		}
+		function appendHtml(htmlString) {
+			document.getElementById("messageList").innerHTML += htmlString;
 		}
 	</script>
 	<style>
