@@ -1,9 +1,9 @@
 from datetime import datetime, timezone
 from typing import List, Optional
 
-from openai.types.beta.threads import MessageContentText
-from openai.types.beta.threads.message_content_text import Text
-from openai.types.beta.threads.thread_message import ThreadMessage, Content
+from openai.types.beta.threads import MessageContent, TextContentBlock
+from openai.types.beta.threads.text import Text
+from openai.types.beta.threads.message import Message
 
 
 
@@ -18,13 +18,13 @@ class ChatMessage:
 		obj.id = dictionary['id']
 		obj.threadId = dictionary['threadId']
 		obj.createdTimestamp = dictionary['created']
-		obj.role = dictionary['role']
-		obj.content = [ MessageContentText(type='text', text=Text(value=dictionary['content'], annotations=[])) ]
+		obj.author = dictionary['author']
+		obj.content = [ TextContentBlock(type='text', text=Text(value=dictionary['content'], annotations=[])) ]
 		return obj
 
 
 	@classmethod
-	def fromAPIObject(cls, apiObject: ThreadMessage):
+	def fromAPIObject(cls, apiObject: Message):
 		obj = cls()
 		obj.setAPIObject(apiObject)
 		return obj
@@ -40,10 +40,10 @@ class ChatMessage:
 		self.createdTimestamp: Optional[datetime] = None
 		"""The timestamp for when the message was created."""
 
-		self.role: Optional[str] = None
-		"""The entity that produced the message. One of `user` or `assistant`."""
+		self.author: Optional[str] = None
+		"""The entity that produced the message. Either `user` or an assistant id."""
 
-		self.content: List[Content] = []
+		self.content: List[MessageContent] = []
 		"""The content of the message in array of text and/or images."""
 
 		self.fileIds: List[str] = []
@@ -52,7 +52,12 @@ class ChatMessage:
 		self.apiObject = None
 
 
-	def setAPIObject(self, apiObject: ThreadMessage):
+	@property
+	def authorType(self):
+		return 'user' if self.author == 'user' else 'assistant'
+
+
+	def setAPIObject(self, apiObject: Message):
 		"""
 		Sets the properties from an API object that came from a request to get this message from the server.
 		"""
@@ -60,7 +65,7 @@ class ChatMessage:
 		self.id = apiObject.id
 		self.threadId = apiObject.thread_id
 		self.createdTimestamp = datetime.fromtimestamp(apiObject.created_at, timezone.utc)
-		self.role = apiObject.role
+		self.author = 'user' if apiObject.role == 'user' else apiObject.assistant_id
 		self.content = apiObject.content
 
 
@@ -72,7 +77,7 @@ class ChatMessage:
 			'id': self.id,
 			'threadId': self.threadId,
 			'created': self.createdTimestamp,
-			'role': self.role,
+			'author': self.author,
 			'content': self.content[0].text.value
 		}
 

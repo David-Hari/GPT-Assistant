@@ -30,7 +30,7 @@ ChatMessages (
     id        text    primary key,
     threadId  text,
     created   timestamp,
-    role      text,
+    author    text,
     content   text,
     foreign key (threadId) references Thread(id)
 )
@@ -105,7 +105,7 @@ class Database:
 
 	def insertMessage(self, message: ChatMessage):
 		with self.connection:
-			sql = 'insert into ChatMessages (id, threadId, created, role, content) values (:id, :threadId, :created, :role, :content)'
+			sql = 'insert into ChatMessages (id, threadId, created, author, content) values (:id, :threadId, :created, :author, :content)'
 			self.connection.execute(sql, message.toDictionary())
 
 

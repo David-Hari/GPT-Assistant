@@ -1,11 +1,6 @@
 from datetime import datetime
-from io import StringIO
 from unittest import TestCase
 
-from openai.types.beta.threads import MessageContentText
-from openai.types.beta.threads.message_content_text import Text
-
-from data.ChatMessage import ChatMessage
 from data.ChatThread import ChatThread
 
 

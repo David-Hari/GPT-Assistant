@@ -52,15 +52,16 @@ class HtmlMessageView(QObject):
 
 
 	def appendMessage(self, message: ChatMessage):
-		htmlStr = self.renderHtmlForMessage(message).replace('\'', '\\\'')
+		htmlStr = self.renderHtmlForMessage(message)
 		self.bridge.messageAdded.emit(htmlStr)
 
 
 	def renderHtmlForMessage(self, message: ChatMessage):
+		# TODO: Escape HTML tags like <script> in the message. Probably use whitelist.
 		localNow = datetime.now().astimezone()
 		localMessageTime = message.createdTimestamp.astimezone()
 		messageHtml = markdown(message.content[0].text.value, extras = ['fenced-code-blocks'])
-		html = self.messageHtml.replace('{{roleClass}}', message.role)
+		html = self.messageHtml.replace('{{authorClass}}', message.authorType )
 		html = html.replace('{{timestamp}}', self.formatDateTime(localNow, localMessageTime))
 		html = html.replace('{{content}}', messageHtml)
 		return html
