@@ -57,10 +57,9 @@ class HtmlMessageView(QObject):
 
 
 	def renderHtmlForMessage(self, message: ChatMessage):
-		# TODO: Escape HTML tags like <script> in the message. Probably use whitelist.
 		localNow = datetime.now().astimezone()
 		localMessageTime = message.createdTimestamp.astimezone()
-		messageHtml = markdown(message.content[0].text.value, extras = ['fenced-code-blocks'])
+		messageHtml = markdown(message.content[0].text.value, safe_mode = 'escape', extras = ['fenced-code-blocks'])
 		html = self.messageHtml.replace('{{authorClass}}', message.authorType )
 		html = html.replace('{{timestamp}}', self.formatDateTime(localNow, localMessageTime))
 		html = html.replace('{{content}}', messageHtml)
