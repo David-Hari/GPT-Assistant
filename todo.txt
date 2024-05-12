@@ -1,14 +1,5 @@
 
 
-* Make "AssistantInterface" which GPTAssistant inherits from,
-  then make a test one which just echoes the user message or something. Then have the ability
-  to choose them from drop down. Map from name to class.
-  Test one only available if an environment variable is set, which I can set in IntelliJ run environment.
-
-* Drop-down for AI model list, initially populated from config but full list fetched when clicked.
-  Filter to only models that can be used with assistants API.
-
-
 * Scroll to bottom when thread is selected and new message is added.
 
 
@@ -27,6 +18,9 @@
   Use a cheaper model like gpt3.5
   Maybe provide previous title to it, so it can determine if it needs to change.
   Maybe set to json mode to force it to respond with just the title.
+
+* Drop-down for AI model list, initially populated from config but full list fetched when clicked.
+  Filter to only models that can be used with assistants API.
 
 * See if I can limit the context window for each thread. Lower it to maybe a few thousand to save cost.
 

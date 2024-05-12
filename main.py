@@ -10,6 +10,7 @@ from PySide6.QtAsyncio import QAsyncioEventLoopPolicy
 from PySide6.QtWidgets import QApplication
 from openai import OpenAI
 
+from MockAPI import MockOpenAI
 from utils import setupLogger
 
 
@@ -46,7 +47,9 @@ dbPath = Path("data/chats.db")
 database = Database(dbPath, not dbPath.exists())
 
 # TODO: AsyncOpenAI()
-chatClient = GPTAssistant(OpenAI(), config.model, database)
+api = OpenAI()
+#api = MockOpenAI()
+chatClient = GPTAssistant(api, config.model, database)
 
 logger.debug('Opening window')
 window = MainWindow(chatClient)
