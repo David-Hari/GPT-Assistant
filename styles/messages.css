@@ -98,7 +98,7 @@ pre {
 }
 
 .codehilite .err { /* Error */
-	border: 1px solid red;
+	background: hsl(0 100% 87.0%);
 }
 .codehilite .ge { font-style: italic; } /* Generic.Emph */
 .codehilite .gs { font-weight: bold; }  /* Generic.Strong */
