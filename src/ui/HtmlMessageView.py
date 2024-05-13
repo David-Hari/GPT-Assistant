@@ -34,8 +34,9 @@ class HtmlMessageView(QObject):
 
 		self.bridge = WebPageBridge(self)
 		self.channel = QWebChannel(self)
-		self.view.page().setWebChannel(self.channel)
 		self.channel.registerObject('bridge', self.bridge)
+		self.view.page().setWebChannel(self.channel)
+		self.view.loadFinished.connect(self.scrollToBottom)
 
 
 	def clear(self):
@@ -54,6 +55,7 @@ class HtmlMessageView(QObject):
 	def appendMessage(self, message: ChatMessage):
 		htmlStr = self.renderHtmlForMessage(message)
 		self.bridge.messageAdded.emit(htmlStr)
+		self.scrollToBottom()
 
 
 	def renderHtmlForMessage(self, message: ChatMessage):
@@ -64,6 +66,10 @@ class HtmlMessageView(QObject):
 		html = html.replace('{{timestamp}}', self.formatDateTime(localNow, localMessageTime))
 		html = html.replace('{{content}}', messageHtml)
 		return html
+
+
+	def scrollToBottom(self):
+		self.view.page().runJavaScript("window.scrollTo(0, document.body.scrollHeight);")
 
 
 	@staticmethod
