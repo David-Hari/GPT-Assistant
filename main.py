@@ -49,7 +49,7 @@ database = Database(dbPath, not dbPath.exists())
 # TODO: AsyncOpenAI()
 api = OpenAI()
 #api = MockOpenAI()
-chatClient = GPTAssistant(api, config.model, database)
+chatClient = GPTAssistant(api, database)
 
 logger.debug('Opening window')
 window = MainWindow(chatClient)

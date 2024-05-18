@@ -24,6 +24,9 @@ class MainWindow(QMainWindow):
 		with open('styles\\MainWindow.css', 'r', encoding='utf-8') as file:
 			self.setStyleSheet(file.read())
 
+		self.ui.aiModelComboBox.addItem('GPT-4o', 'gpt-4o')
+		self.ui.aiModelComboBox.addItem('GPT-3.5', 'gpt-3.5-turbo-0125')
+
 		self.messageView = HtmlMessageView(self.ui.messageView)
 		self.chatThreadListModel = ChatThreadListModel()
 		self.chatThreadDelegate = ChatThreadItemDelegate(self.ui.chatThreadsList)
@@ -38,6 +41,10 @@ class MainWindow(QMainWindow):
 		self.chatClient.messageAdded.connect(self.messageView.appendMessage)
 
 		self.messageView.clear()
+
+
+	def aiModelChanged(self, current: int):
+		self.chatClient.modelName = self.ui.aiModelComboBox.currentData()
 
 
 	def chatThreadListLoaded(self):

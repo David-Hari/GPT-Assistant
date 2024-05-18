@@ -17,9 +17,9 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWidgets import (QAbstractItemView, QApplication, QComboBox, QFrame,
-    QGridLayout, QHBoxLayout, QListView, QMainWindow,
-    QPlainTextEdit, QPushButton, QSizePolicy, QSpacerItem,
-    QVBoxLayout, QWidget)
+    QGridLayout, QHBoxLayout, QLabel, QListView,
+    QMainWindow, QPlainTextEdit, QPushButton, QSizePolicy,
+    QSpacerItem, QVBoxLayout, QWidget)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -90,10 +90,16 @@ class Ui_MainWindow(object):
         self.topBar.setFrameShadow(QFrame.Raised)
         self.horizontalLayout_2 = QHBoxLayout(self.topBar)
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        self.comboBox = QComboBox(self.topBar)
-        self.comboBox.setObjectName(u"comboBox")
+        self.label = QLabel(self.topBar)
+        self.label.setObjectName(u"label")
 
-        self.horizontalLayout_2.addWidget(self.comboBox)
+        self.horizontalLayout_2.addWidget(self.label)
+
+        self.aiModelComboBox = QComboBox(self.topBar)
+        self.aiModelComboBox.setObjectName(u"aiModelComboBox")
+        self.aiModelComboBox.setMinimumSize(QSize(150, 0))
+
+        self.horizontalLayout_2.addWidget(self.aiModelComboBox)
 
         self.hSpacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
@@ -121,6 +127,7 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
         self.newChatButton.clicked.connect(MainWindow.createNewChat)
         self.sendButton.clicked.connect(MainWindow.sendMessage)
+        self.aiModelComboBox.currentIndexChanged.connect(MainWindow.aiModelChanged)
 
         QMetaObject.connectSlotsByName(MainWindow)
     # setupUi
@@ -129,5 +136,6 @@ class Ui_MainWindow(object):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"AI Assistant", None))
         self.newChatButton.setText(QCoreApplication.translate("MainWindow", u"New Chat", None))
         self.sendButton.setText(QCoreApplication.translate("MainWindow", u"Send", None))
+        self.label.setText(QCoreApplication.translate("MainWindow", u"Model:", None))
     # retranslateUi
 

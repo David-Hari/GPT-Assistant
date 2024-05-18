@@ -1,8 +1,5 @@
 
 
-* Scroll to bottom when thread is selected and new message is added.
-
-
 * Store window position and other settings using Qt settings
 
 * Import threads from ChatGPT.

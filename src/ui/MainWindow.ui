@@ -134,7 +134,21 @@
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_2">
           <item>
-           <widget class="QComboBox" name="comboBox"/>
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string>Model:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="aiModelComboBox">
+            <property name="minimumSize">
+             <size>
+              <width>150</width>
+              <height>0</height>
+             </size>
+            </property>
+           </widget>
           </item>
           <item>
            <spacer name="hSpacer">
@@ -203,12 +217,28 @@
    <slot>sendMessage()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>988</x>
-     <y>988</y>
+     <x>1497</x>
+     <y>1113</y>
     </hint>
     <hint type="destinationlabel">
      <x>774</x>
      <y>-19</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>aiModelComboBox</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>aiModelChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>458</x>
+     <y>26</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>639</x>
+     <y>-16</y>
     </hint>
    </hints>
   </connection>
@@ -217,5 +247,6 @@
   <slot>createNewChat()</slot>
   <slot>sendMessage()</slot>
   <slot>chatThreadChanged()</slot>
+  <slot>aiModelChanged()</slot>
  </slots>
 </ui>

@@ -1,8 +1,9 @@
 import asyncio
 import time
+from typing import Optional
 
 from PySide6.QtCore import QObject, Signal, Slot
-from openai import OpenAI
+from openai import OpenAI, APIError
 
 from core.Database import Database
 from data.ChatMessage import ChatMessage
@@ -15,14 +16,15 @@ class GPTAssistant(QObject):
 	chatThreadListLoaded = Signal()
 	chatThreadAdded = Signal(ChatThread)
 	messageAdded = Signal(ChatMessage)
+	errorOccurred = Signal(str)
 
 
 	# TODO: api: AsyncOpenAI
-	def __init__(self, api: OpenAI, defaultModel, database: Database):
+	def __init__(self, api: OpenAI, database: Database):
 		super().__init__()
 
 		self.api = api
-		self.modelName = defaultModel
+		self.modelName = None  # Assistant model will be used
 		self.database = database
 		self.chatThreads: dict[str, ChatThread] = {}
 		self.mainAssistant = None
@@ -151,24 +153,33 @@ class GPTAssistant(QObject):
 		self.addNewMessage(chatThread, userMessage)
 		self.messageAdded.emit(userMessage)
 
-		run = self.api.beta.threads.runs.create(
-			thread_id = chatThreadId,
-			assistant_id = self.mainAssistant.id
-		)
-		while run.status != 'completed' and run.status != 'failed':
-			time.sleep(1)
-			run = self.api.beta.threads.runs.retrieve(
+		try:
+			run = self.api.beta.threads.runs.create(
 				thread_id = chatThreadId,
-				run_id = run.id
+				assistant_id = self.mainAssistant.id,
+				model = self.modelName
 			)
-		if run.status == 'failed':
-			logger.error('Failed to retrieve chat response. ' + run.last_error.message)
-		else:
-			responseMessage = ChatMessage.fromAPIObject(self.api.beta.threads.messages.list(chatThreadId).data[0])
-			self.addNewMessage(chatThread, responseMessage)
-			self.messageAdded.emit(responseMessage)
+			while run.status != 'completed' and run.status != 'failed':
+				time.sleep(1)
+				run = self.api.beta.threads.runs.retrieve(
+					thread_id = chatThreadId,
+					run_id = run.id
+				)
+			if run.status == 'failed':
+				self.handleError('Failed to retrieve chat response. ' + run.last_error.message)
+			else:
+				responseMessage = ChatMessage.fromAPIObject(self.api.beta.threads.messages.list(chatThreadId).data[0])
+				self.addNewMessage(chatThread, responseMessage)
+				self.messageAdded.emit(responseMessage)
+		except APIError as e:
+			self.handleError('Failed to generate response.', e)
 
 
 	def addNewMessage(self, chatThread: ChatThread, message: ChatMessage):
 		chatThread.messages.append(message)
 		self.database.insertMessage(message)
+
+
+	def handleError(self, message, error: Optional[APIError]):
+		logger.error(message + (' ' + str(error)) if error else '')
+		self.errorOccurred.emit(message + (' ' + error.body['message']) if error else '')
