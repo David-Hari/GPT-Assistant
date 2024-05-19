@@ -8,10 +8,6 @@ body {
 	background: hsl(60, 25%, 98%);
 }
 
-p, li {
-	white-space: pre-wrap;
-}
-
 hr {
 	height: 1px;
 	border-width: 0;
