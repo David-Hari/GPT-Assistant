@@ -6,11 +6,10 @@ from pathlib import Path
 
 from PySide6.QtCore import qInstallMessageHandler, QtMsgType
 from omegaconf import OmegaConf
-from PySide6.QtAsyncio import QAsyncioEventLoopPolicy
+import PySide6.QtAsyncio as QtAsyncio
 from PySide6.QtWidgets import QApplication
 from openai import OpenAI
 
-from MockAPI import MockOpenAI
 from utils import setupLogger
 
 
@@ -48,6 +47,7 @@ database = Database(dbPath, not dbPath.exists())
 
 # TODO: AsyncOpenAI()
 api = OpenAI()
+#from MockAPI import MockOpenAI
 #api = MockOpenAI()
 chatClient = GPTAssistant(api, database)
 
@@ -57,8 +57,5 @@ window.show()
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
-asyncio.set_event_loop_policy(QAsyncioEventLoopPolicy())
-# TODO: Maybe this should be signalled from MainWindow
-#asyncio.ensure_future(chatClient.loadChatThreadList())
-chatClient.loadChatThreadList()
-asyncio.get_event_loop().run_forever()
+chatClient.startUp()
+QtAsyncio.run()

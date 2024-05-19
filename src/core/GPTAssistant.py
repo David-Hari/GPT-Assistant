@@ -29,7 +29,12 @@ class GPTAssistant(QObject):
 		self.chatThreads: dict[str, ChatThread] = {}
 		self.mainAssistant = None
 
+
+	def startUp(self):
+		logger.debug('Starting up GPT')
 		self.retrieveAssistants()
+		self.loadChatThreadList()
+		logger.debug('Done starting up GPT')
 
 
 	def retrieveAssistants(self):
